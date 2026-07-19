@@ -1,0 +1,14 @@
+{
+  "name": "ai-coursebook-generator-dokploy",
+  "version": "9.1.0",
+  "private": true,
+  "description": "VPS/Dokploy edition of the AI Coursebook Generator",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "check": "node --check server.js && node --check rpc-worker.js && node --check backend/runtime.js && node --check public/gas-client.js"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

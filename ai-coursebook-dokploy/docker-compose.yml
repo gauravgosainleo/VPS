@@ -1,0 +1,18 @@
+services:
+  coursebook:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      PORT: 3000
+      DATA_DIR: /app/data
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    volumes:
+      - coursebook_data:/app/data
+
+volumes:
+  coursebook_data:

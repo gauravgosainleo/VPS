@@ -1,0 +1,1632 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <script src="/gas-client.js"></script>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Coursebook Generator — Koenig Solutions</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Sora:wght@300;400;500;600;700;800&display=swap');
+    :root {
+      --pri:#1a365d;--sec:#2c5282;--acc:#3182ce;--suc:#38a169;--err:#e53e3e;
+      --txt:#1e293b;--txtL:#475569;--txtM:#64748b;--bg:#f8fafc;--bgL:#f1f5f9;
+      --bdr:#bfdbfe;--wht:#ffffff;--org:#dd6b20;--lbg:#ebf8ff;
+      --blu:#2563eb;--blu-l:#3b82f6;--blu-d:#1d4ed8;--blu-dd:#1e3a8a;
+      --purple:#805ad5;--pdf-red:#dc2626;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html,body{height:100%;overflow:hidden;}
+    body{font-family:'Plus Jakarta Sans',system-ui,sans-serif;background:#e0ecfc;color:var(--txt);}
+    .app{display:flex;flex-direction:column;height:100vh;position:relative;overflow:hidden;background:linear-gradient(155deg,#d6e6fa 0%,#dbeafe 25%,#e8f1fc 50%,#eff6ff 75%,#f0f7ff 100%);}
+    .orb{position:absolute;border-radius:50%;filter:blur(80px);pointer-events:none;z-index:0;animation:orbMove 28s ease-in-out infinite;}
+    .orb-1{width:350px;height:350px;background:rgba(147,197,253,.45);top:-80px;right:8%;opacity:.7;}
+    .orb-2{width:400px;height:400px;background:rgba(96,165,250,.28);bottom:-120px;left:-3%;animation-delay:-14s;opacity:.65;}
+    @keyframes orbMove{0%,100%{transform:translate(0,0);}40%{transform:translate(15px,-20px);}70%{transform:translate(-10px,15px);}}
+
+    header{display:flex;align-items:center;gap:14px;padding:10px 28px;flex-shrink:0;position:relative;z-index:2;background:#ffffff;border-bottom:1.5px solid #bfdbfe;box-shadow:0 2px 10px rgba(37,99,235,.06);}
+    .header-logo{height:40px;width:auto;object-fit:contain;flex-shrink:0;}
+    .header-divider{width:1.5px;height:30px;background:linear-gradient(180deg,transparent,#93c5fd,transparent);flex-shrink:0;}
+    .header-text{flex:1;}
+    header h1{font-family:'Sora',sans-serif;font-size:1.4rem;font-weight:800;letter-spacing:-.03em;background:linear-gradient(135deg,#1e3a8a 0%,#2563eb 50%,#3b82f6 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    header p{font-size:.78rem;color:#64748b;margin-top:1px;letter-spacing:.2px;font-weight:500;}
+    .btn-dashboard{padding:8px 18px;border:1.5px solid #0d9488;border-radius:8px;background:linear-gradient(180deg,#14b8a6,#0d9488);color:white;font-size:.78rem;font-weight:700;cursor:pointer;transition:all .12s;font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap;box-shadow:0 3px 0 #0f766e;position:relative;top:0;display:flex;align-items:center;gap:6px;flex-shrink:0;}
+    .btn-dashboard:hover{top:-1px;box-shadow:0 4px 0 #0f766e;}
+    .btn-dashboard svg{width:16px;height:16px;}
+
+    .panels{display:flex;flex:1;overflow:hidden;position:relative;z-index:1;}
+    .left{width:38%;overflow-y:auto;padding:20px 24px;background:#ffffff;border-right:1.5px solid #bfdbfe;}
+    .left::-webkit-scrollbar{width:5px;}.left::-webkit-scrollbar-thumb{background:#93c5fd;border-radius:8px;}
+    .right{width:62%;display:flex;flex-direction:column;background:var(--bgL);overflow:hidden;}
+    @media(max-width:1000px){.panels{flex-direction:column;}.left,.right{width:100%;height:50%;}}
+
+    .fg{margin-bottom:14px;position:relative;}
+    .fg label{display:block;font-weight:700;margin-bottom:5px;font-size:.7rem;color:#3b82f6;letter-spacing:.6px;text-transform:uppercase;}
+    .fg .hint{font-weight:500;color:#93c5fd;font-size:.68rem;text-transform:none;letter-spacing:0;}
+    .fg input,.fg textarea,.fg select{width:100%;padding:10px 14px;border:1.5px solid #bfdbfe;border-radius:10px;font-size:.88rem;font-family:'Plus Jakarta Sans',sans-serif;transition:all .2s;background:#ffffff;color:var(--txt);box-shadow:0 1px 3px rgba(37,99,235,.06);}
+    .fg input:focus,.fg textarea:focus,.fg select:focus{outline:none;border-color:#3b82f6;box-shadow:0 0 0 3px rgba(59,130,246,.12);}
+    .fg input[readonly]{background:#f0f7ff;color:#64748b;cursor:not-allowed;border-color:#dbeafe;box-shadow:none;}
+
+    .course-mode-box{padding:14px 16px;border-radius:12px;margin-bottom:14px;background:#ffffff;border:1.5px solid #bfdbfe;box-shadow:0 1px 3px rgba(37,99,235,.06);position:relative;z-index:20;}
+    .course-mode-box .cm-label{font-weight:700;font-size:.7rem;color:#3b82f6;display:block;margin-bottom:10px;text-transform:uppercase;letter-spacing:.6px;}
+    .course-mode-options{display:flex;gap:8px;}
+    .course-mode-opt{flex:1;}
+    .course-mode-opt input{display:none;}
+    .course-mode-opt label{display:block;text-align:center;padding:10px 8px;border-radius:10px;cursor:pointer;font-size:.8rem;font-weight:700;color:#64748b;background:#f0f7ff;border:1.5px solid #bfdbfe;transition:all .15s;}
+    .course-mode-opt input:checked+label{background:linear-gradient(180deg,#3b82f6,#2563eb);color:white;border-color:#2563eb;box-shadow:0 3px 0 #1d4ed8;}
+    .course-mode-opt span{display:block;font-size:.64rem;font-weight:500;opacity:.75;margin-top:3px;}
+    .rms-course-wrap{position:relative;width:100%;z-index:9500;}
+    .rms-course-wrap.open{z-index:99999;}
+    .rms-course-panel{position:absolute;top:calc(100% + 2px);left:0;right:0;z-index:999999;background:#ffffff;border:2px solid #2563eb;border-radius:0 0 10px 10px;box-shadow:0 14px 40px rgba(37,99,235,.24);max-height:0;overflow:hidden;opacity:0;transition:max-height .18s ease,opacity .12s ease;}
+    .rms-course-wrap.open .rms-course-panel{max-height:300px;opacity:1;overflow-y:auto;}
+    .rms-course-option{padding:10px 14px;cursor:pointer;font-size:.83rem;color:#334155;border-left:3px solid transparent;background:#ffffff;}
+    .rms-course-option:hover,.rms-course-option.active{background:#eff6ff;color:#1e40af;border-left-color:#3b82f6;}
+    .rms-course-option .vendor{display:block;font-size:.68rem;color:#64748b;margin-top:2px;}
+    .rms-course-empty{padding:16px;text-align:center;color:#60a5fa;font-size:.82rem;font-style:italic;background:#ffffff;}
+    .course-mode-note{margin-top:6px;font-size:.72rem;color:#64748b;line-height:1.4;}
+    .fg textarea{min-height:120px;resize:vertical;font-family:'DM Mono',Consolas,monospace;font-size:.78rem;line-height:1.5;}
+    .row{display:flex;gap:12px;position:relative;}.row .fg{flex:1;}
+
+    .ss-wrap{position:relative;width:100%;z-index:50;}
+    .ss-trigger{width:100%;padding:10px 14px;border:1.5px solid #bfdbfe;border-radius:10px;font-size:.88rem;font-family:'Plus Jakarta Sans',sans-serif;background:#ffffff;color:var(--txt);cursor:pointer;display:flex;align-items:center;justify-content:space-between;transition:all .2s;user-select:none;box-shadow:0 1px 3px rgba(37,99,235,.08);}
+    .ss-trigger:hover{border-color:#60a5fa;}
+    .ss-wrap.open .ss-trigger{border-color:#2563eb;box-shadow:0 0 0 3px rgba(37,99,235,.15);border-bottom-left-radius:0;border-bottom-right-radius:0;}
+    .ss-trigger .ss-arrow{font-size:.55rem;color:#60a5fa;transition:transform .25s;}
+    .ss-wrap.open .ss-trigger .ss-arrow{transform:rotate(180deg);}
+    .ss-panel{position:absolute;top:100%;left:0;right:0;z-index:9999;background:#ffffff;border:2px solid #2563eb;border-top:none;border-radius:0 0 10px 10px;max-height:0;overflow:hidden;transition:max-height .3s cubic-bezier(.4,0,.2,1),opacity .15s;opacity:0;box-shadow:0 12px 40px rgba(37,99,235,.2);}
+    .ss-wrap.open .ss-panel{max-height:280px;opacity:1;overflow-y:auto;}
+    .ss-search-box{padding:9px 10px;border-bottom:1.5px solid #dbeafe;position:sticky;top:0;background:#ffffff;z-index:10;}
+    .ss-search-box input{width:100%;padding:9px 10px 9px 34px;border:1.5px solid #bfdbfe;border-radius:8px;background:#f0f7ff;color:var(--txt);font-size:.85rem;font-family:'Plus Jakarta Sans',sans-serif;outline:none;}
+    .ss-opt{padding:10px 14px;cursor:pointer;font-size:.86rem;color:#334155;transition:all .1s;border-left:3px solid transparent;background:#ffffff;}
+    .ss-opt:hover{background:#eff6ff;color:#1e40af;border-left-color:#3b82f6;}
+    .ss-opt.active{background:#dbeafe;color:#1e3a8a;border-left-color:#1d4ed8;font-weight:700;}
+    .ss-empty{padding:18px;text-align:center;color:#60a5fa;font-size:.85rem;font-style:italic;}
+    .ss-loading{padding:18px;text-align:center;color:#2563eb;font-size:.85rem;display:flex;align-items:center;justify-content:center;gap:8px;}
+
+    .tgl-box{display:flex;align-items:center;gap:10px;padding:12px 16px;background:#ffffff;border:1.5px solid #bfdbfe;border-radius:12px;margin-bottom:14px;}
+    .tgl-box .tgl-lbl{font-weight:600;flex:1;font-size:.88rem;color:var(--txt);}
+    .tgl-box .tgl-hint{font-size:.7rem;color:#93c5fd;display:block;margin-top:2px;font-weight:400;}
+    .tgl{position:relative;width:48px;height:26px;flex-shrink:0;}.tgl input{opacity:0;width:0;height:0;}
+    .tgl-sl{position:absolute;cursor:pointer;inset:0;background:#93c5fd;transition:.3s;border-radius:26px;}
+    .tgl-sl:before{position:absolute;content:"";height:20px;width:20px;left:3px;bottom:3px;background:white;transition:.3s;border-radius:50%;}
+    .tgl input:checked+.tgl-sl{background:linear-gradient(135deg,#22c55e,#15803d);}
+    .tgl input:checked+.tgl-sl:before{transform:translateX(22px);}
+    .tgl-st{font-size:.78rem;font-weight:700;min-width:30px;}.tgl-st.on{color:#16a34a;}.tgl-st.off{color:#93c5fd;}
+
+    .toc-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+    .btn-toc{padding:7px 16px;border:1.5px solid #2563eb;border-radius:8px;background:linear-gradient(180deg,#3b82f6,#2563eb);color:white;font-size:.76rem;font-weight:700;cursor:pointer;transition:all .12s;font-family:'Plus Jakarta Sans',sans-serif;white-space:nowrap;box-shadow:0 3px 0 #1d4ed8;position:relative;top:0;}
+    .btn-toc:hover{top:-1px;box-shadow:0 4px 0 #1d4ed8;}
+    .btn-toc:disabled{opacity:.3;cursor:not-allowed;top:0;}
+
+    .btn{padding:11px 24px;border:none;border-radius:10px;font-size:.88rem;font-weight:700;cursor:pointer;transition:all .12s;display:inline-flex;align-items:center;gap:6px;font-family:'Plus Jakarta Sans',sans-serif;position:relative;top:0;}
+    .btn-go{background:linear-gradient(180deg,#3b82f6,#2563eb);color:white;box-shadow:0 5px 0 #1d4ed8,0 8px 20px rgba(37,99,235,.2);}
+    .btn-go:hover:not(:disabled){top:-2px;box-shadow:0 7px 0 #1d4ed8,0 12px 28px rgba(37,99,235,.25);}
+    .btn-go:disabled{opacity:.3;cursor:not-allowed;top:0;}
+    .btn-pdf{background:linear-gradient(180deg,#dc2626,#b91c1c);color:white;box-shadow:0 5px 0 #7f1d1d,0 8px 20px rgba(127,29,29,.15);}
+    .btn-pdf:hover:not(:disabled){top:-2px;box-shadow:0 7px 0 #7f1d1d;}
+    .btn-pdf:disabled{opacity:.2;cursor:not-allowed;top:0;}
+    .btn-html{background:linear-gradient(180deg,#2b6cb0,#2c5282);color:white;box-shadow:0 5px 0 #1a365d;}
+    .btn-html:hover:not(:disabled){top:-2px;box-shadow:0 7px 0 #1a365d;}
+    .btn-html:disabled{opacity:.2;cursor:not-allowed;top:0;}
+    .btn-stop{background:linear-gradient(180deg,#dc2626,#b91c1c);color:white;display:none;box-shadow:0 5px 0 #7f1d1d;}
+    .btn-stop.vis{display:inline-flex;}
+    .btn-pause{background:linear-gradient(180deg,#f59e0b,#d97706);color:white;display:none;box-shadow:0 5px 0 #92400e;}
+    .btn-pause.vis{display:inline-flex;}
+    .btn-pause.resume{background:linear-gradient(180deg,#22c55e,#16a34a);box-shadow:0 5px 0 #15803d;animation:pulseResume 2s ease-in-out infinite;}
+    @keyframes pulseResume{0%,100%{box-shadow:0 5px 0 #15803d,0 0 0 0 rgba(34,197,94,.3);}50%{box-shadow:0 5px 0 #15803d,0 0 0 8px rgba(34,197,94,0);}}
+    .btns{display:flex;gap:10px;flex-wrap:wrap;}
+
+    .prog{margin-bottom:14px;display:none;}.prog.vis{display:block;}
+    .prog-head{display:flex;justify-content:space-between;margin-bottom:5px;font-size:.8rem;}
+    .prog-st{font-weight:700;background:linear-gradient(135deg,#1e40af,#2563eb);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .prog-pct{color:#60a5fa;font-weight:600;}
+    .prog-bar{height:8px;background:#dbeafe;border-radius:5px;overflow:hidden;}
+    .prog-fill{height:100%;border-radius:5px;transition:width .3s;width:0;background:linear-gradient(90deg,#2563eb,#3b82f6,#60a5fa);}
+    .prog-fill.paused{background:linear-gradient(90deg,#f59e0b,#fbbf24,#fcd34d);animation:pausePulse 1.5s ease-in-out infinite;}
+    @keyframes pausePulse{0%,100%{opacity:1;}50%{opacity:.6;}}
+
+    .smsg{padding:10px 14px;border-radius:10px;margin-bottom:12px;display:none;align-items:center;gap:8px;font-size:.85rem;font-weight:500;}
+    .smsg.vis{display:flex;}
+    .smsg.success{background:#f0fdf4;border:1.5px solid #86efac;color:#166534;}
+    .smsg.error{background:#fef2f2;border:1.5px solid #fca5a5;color:#991b1b;}
+    .smsg.info{background:#eff6ff;border:1.5px solid #93c5fd;color:#1e40af;}
+    .smsg.warning{background:#fffbeb;border:1.5px solid #fde68a;color:#92400e;}
+    .flink{display:none;padding:10px 14px;background:#f0fdf4;border:1.5px solid #86efac;border-radius:10px;margin-bottom:12px;font-size:.85rem;color:#166534;}
+    .flink.vis{display:block;}.flink a{color:#2563eb;font-weight:600;word-break:break-all;}
+    .db-status{display:none;padding:12px 14px;border-radius:10px;margin-bottom:12px;font-size:.84rem;font-weight:600;line-height:1.45;align-items:flex-start;gap:8px;}
+    .db-status.vis{display:flex;}
+    .db-status.info{background:#eff6ff;border:1.5px solid #93c5fd;color:#1e40af;}
+    .db-status.success{background:#f0fdf4;border:1.5px solid #86efac;color:#166534;}
+    .db-status.warning{background:#fffbeb;border:1.5px solid #fde68a;color:#92400e;}
+    .db-status.error{background:#fef2f2;border:1.5px solid #fca5a5;color:#991b1b;}
+    .db-status .db-title{font-weight:800;display:block;margin-bottom:2px;}
+    .db-status .db-detail{font-weight:500;opacity:.9;}
+
+    .retry-badge{display:none;padding:5px 12px;background:#fffbeb;border:1.5px solid #fde68a;border-radius:8px;font-size:.72rem;color:#92400e;font-weight:600;align-items:center;gap:4px;margin-bottom:8px;}
+    .retry-badge.vis{display:flex;}
+    .retry-badge .rb-count{font-weight:800;color:#dc2626;}
+
+    .logs-sec{margin-top:16px;}
+    .logs-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+    .logs-hdr h3{font-size:.7rem;font-weight:700;color:#60a5fa;text-transform:uppercase;letter-spacing:.6px;}
+    .logs-tog{padding:4px 12px;font-size:.68rem;background:#f0f7ff;border:1.5px solid #bfdbfe;border-radius:6px;cursor:pointer;color:#2563eb;font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;}
+    .logbox{background:#1a202c;border:1.5px solid #bfdbfe;border-radius:10px;padding:10px;max-height:150px;overflow-y:auto;font-family:'DM Mono',Consolas,monospace;font-size:.68rem;line-height:1.6;}
+    .le{margin-bottom:2px;display:flex;gap:6px;}.le-t{color:#718096;flex-shrink:0;}.le-m{color:#e2e8f0;}
+    .le.info .le-m{color:#90cdf4;}.le.success .le-m{color:#68d391;}.le.error .le-m{color:#fc8181;}
+    .le-empty{color:#718096;font-style:italic;}.hidden{display:none!important;}
+
+    .prev-header{padding:12px 18px;border-bottom:1.5px solid #bfdbfe;display:flex;justify-content:space-between;align-items:center;flex-shrink:0;background:#ffffff;}
+    .prev-header h2{font-family:'Sora',sans-serif;font-size:.88rem;font-weight:700;background:linear-gradient(135deg,#1e3a8a,#2563eb);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .page-counter{font-size:.72rem;font-weight:700;padding:5px 14px;border-radius:20px;background:linear-gradient(180deg,#3b82f6,#2563eb);color:white;box-shadow:0 3px 0 #1d4ed8;}
+
+    .ed-toolbar{display:none;padding:8px 14px;background:#ffffff;border-bottom:1.5px solid #bfdbfe;flex-wrap:wrap;align-items:center;gap:4px;}
+    .ed-toolbar.vis{display:flex;}
+    .ed-toolbar button{padding:6px 10px;border:1.5px solid #bfdbfe;border-radius:7px;background:#ffffff;color:#475569;font-size:.76rem;cursor:pointer;transition:all .12s;font-family:'Plus Jakarta Sans',sans-serif;display:flex;align-items:center;gap:4px;box-shadow:0 2px 0 #93c5fd;position:relative;top:0;font-weight:600;}
+    .ed-toolbar button:hover{top:-1px;background:#eff6ff;color:#1e40af;}
+    .ed-toolbar .tb-ai{background:linear-gradient(180deg,#a78bfa,#7c3aed);border-color:#6d28d9;color:white;box-shadow:0 3px 0 #5b21b6;}
+    .ed-toolbar .tb-ai:hover{color:white;background:linear-gradient(180deg,#c4b5fd,#8b5cf6);}
+    .ed-toolbar .tb-ai:disabled{opacity:.4;cursor:not-allowed;top:0;}
+    .ed-autosave{margin-left:auto;font-size:.75rem;color:var(--suc);display:flex;align-items:center;gap:5px;opacity:0;transition:opacity .3s;}
+    .ed-autosave.vis{opacity:1;}
+
+    .preview-wrap{flex:1;overflow:hidden;display:flex;flex-direction:column;}
+    .preview-container{flex:1;overflow:auto;background:var(--wht);border:none;}
+    .preview-container iframe{width:100%;height:100%;border:none;}
+    .prev-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px;width:100%;height:100%;color:var(--txtM);}
+    .prev-empty svg{width:56px;height:56px;margin-bottom:14px;opacity:.25;color:#60a5fa;}
+    .prev-empty h3{font-size:.95rem;margin-bottom:6px;color:#475569;font-family:'Sora',sans-serif;}
+    .prev-empty p{font-size:.78rem;color:#93c5fd;}
+
+    .modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(30,58,138,.3);backdrop-filter:blur(6px);z-index:9999;align-items:center;justify-content:center;}
+    .modal-overlay.vis{display:flex;}
+    .modal{background:#ffffff;border-radius:16px;box-shadow:0 6px 0 rgba(37,99,235,.06),0 24px 60px rgba(37,99,235,.15);max-width:500px;width:90%;max-height:90vh;overflow:hidden;}
+    .modal-hdr{background:linear-gradient(135deg,var(--purple),#6b46c1);color:white;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;}
+    .modal-hdr h3{font-size:1.1rem;font-weight:600;}
+    .modal-close{background:none;border:none;color:white;font-size:1.5rem;cursor:pointer;}
+    .modal-body{padding:20px;}
+    .modal-body p{margin-bottom:15px;color:var(--txtL);font-size:.9rem;}
+    .modal-body textarea,.modal-body input[type="text"]{width:100%;padding:10px 12px;border:1.5px solid #bfdbfe;border-radius:8px;font-size:.9rem;font-family:'Plus Jakarta Sans',sans-serif;margin-bottom:14px;resize:vertical;}
+    .modal-body textarea{min-height:80px;}
+    .modal-footer{padding:15px 20px;background:var(--bgL);display:flex;justify-content:flex-end;gap:10px;}
+    .modal-footer .btn-cancel{background:#f0f7ff;color:#2563eb;border:1px solid #bfdbfe;padding:10px 22px;border-radius:8px;font-size:.9rem;font-weight:700;cursor:pointer;}
+    .modal-footer .btn-purple{background:linear-gradient(180deg,#a78bfa,#7c3aed);color:white;padding:10px 22px;border-radius:8px;font-size:.9rem;font-weight:700;cursor:pointer;border:none;}
+    .modal-footer .btn-purple:disabled{opacity:.4;cursor:not-allowed;}
+    .sel-img-info{background:#faf5ff;border:1px solid var(--purple);border-radius:8px;padding:12px;margin-bottom:15px;display:flex;align-items:center;gap:12px;}
+    .sel-img-info img{width:60px;height:60px;object-fit:cover;border-radius:6px;border:2px solid var(--purple);}
+
+    .spinner{display:inline-block;width:14px;height:14px;border:2.5px solid #dbeafe;border-top:2.5px solid #2563eb;border-radius:50%;animation:spin .6s linear infinite;}
+    @keyframes spin{to{transform:rotate(360deg);}}
+
+    .dash-bg{position:fixed;inset:0;z-index:8500;background:linear-gradient(155deg,#d6e6fa 0%,#dbeafe 25%,#e8f1fc 50%,#eff6ff 75%,#f0f7ff 100%);display:flex;flex-direction:column;opacity:0;pointer-events:none;transition:opacity .3s;}
+    .dash-bg.vis{opacity:1;pointer-events:auto;}
+    .dash-header{display:flex;align-items:center;gap:14px;padding:14px 28px;flex-shrink:0;background:#ffffff;border-bottom:1.5px solid #bfdbfe;}
+    .dash-header h1{font-family:'Sora',sans-serif;font-size:1.3rem;font-weight:800;background:linear-gradient(135deg,#0f766e,#14b8a6,#2dd4bf);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;flex:1;}
+    .dash-header .dash-close{padding:8px 20px;border:1.5px solid #dc2626;border-radius:8px;background:linear-gradient(180deg,#f87171,#ef4444);color:white;font-size:.82rem;font-weight:700;cursor:pointer;box-shadow:0 3px 0 #b91c1c;position:relative;top:0;}
+    .dash-header .dash-close:hover{top:-1px;}
+    .dash-header .dash-refresh{padding:8px 16px;border:1.5px solid #2563eb;border-radius:8px;background:linear-gradient(180deg,#3b82f6,#2563eb);color:white;font-size:.82rem;font-weight:700;cursor:pointer;box-shadow:0 3px 0 #1d4ed8;position:relative;top:0;}
+    .dash-header .dash-refresh:hover{top:-1px;}
+    .dash-header .dash-refresh:disabled{opacity:.4;cursor:not-allowed;top:0;}
+    .dash-content{flex:1;overflow-y:auto;padding:20px 28px;}
+    .dash-stats{display:flex;gap:14px;margin-bottom:20px;flex-wrap:wrap;}
+    .dash-stat{flex:1;min-width:140px;padding:16px 20px;border-radius:12px;background:#ffffff;border:1.5px solid #bfdbfe;box-shadow:0 3px 0 rgba(37,99,235,.08);}
+    .dash-stat .ds-label{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px;}
+    .dash-stat .ds-value{font-family:'Sora',sans-serif;font-size:1.6rem;font-weight:800;line-height:1.2;}
+    .dash-stat.total .ds-label{color:#2563eb;}.dash-stat.total .ds-value{color:#1e3a8a;}
+    .dash-stat.completed .ds-label{color:#16a34a;}.dash-stat.completed .ds-value{color:#166534;}
+    .dash-stat.stopped .ds-label{color:#d97706;}.dash-stat.stopped .ds-value{color:#92400e;}
+    .dash-stat.errors .ds-label{color:#dc2626;}.dash-stat.errors .ds-value{color:#991b1b;}
+    .dash-stat.generating .ds-label{color:#7c3aed;}.dash-stat.generating .ds-value{color:#5b21b6;}
+    .dash-stat.cost .ds-label{color:#0d9488;}.dash-stat.cost .ds-value{color:#0f766e;}
+    .dash-filters{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:flex-end;padding:14px 18px;background:#ffffff;border:1.5px solid #bfdbfe;border-radius:12px;}
+    .dash-filters .df-group{display:flex;flex-direction:column;gap:4px;}
+    .dash-filters .df-group label{font-size:.65rem;font-weight:700;color:#3b82f6;text-transform:uppercase;letter-spacing:.5px;}
+    .dash-filters .df-group input,.dash-filters .df-group select{padding:8px 12px;border:1.5px solid #bfdbfe;border-radius:8px;font-size:.82rem;font-family:'Plus Jakarta Sans',sans-serif;background:#ffffff;color:var(--txt);min-width:140px;}
+    .dash-filters .df-clear{padding:8px 14px;border:1.5px solid #94a3b8;border-radius:8px;background:#f8fafc;color:#475569;font-size:.78rem;font-weight:600;cursor:pointer;align-self:flex-end;}
+    .dash-table-wrap{background:#ffffff;border:1.5px solid #bfdbfe;border-radius:12px;overflow:hidden;box-shadow:0 3px 0 rgba(37,99,235,.06);}
+    .dash-table{width:100%;border-collapse:collapse;font-size:.82rem;}
+    .dash-table thead{background:linear-gradient(180deg,#eff6ff,#dbeafe);position:sticky;top:0;z-index:2;}
+    .dash-table th{padding:11px 14px;text-align:left;font-size:.68rem;font-weight:700;color:#1e40af;text-transform:uppercase;letter-spacing:.5px;border-bottom:1.5px solid #bfdbfe;white-space:nowrap;cursor:pointer;}
+    .dash-table th .sort-arrow{margin-left:4px;font-size:.6rem;color:#93c5fd;}
+    .dash-table td{padding:10px 14px;border-bottom:1px solid #e2e8f0;color:#334155;vertical-align:middle;}
+    .dash-table tbody tr:hover{background:#f0f7ff;}
+    .dash-table .dt-title{font-weight:600;color:#1e293b;max-width:220px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    .dash-table .dt-link a{color:#2563eb;font-weight:600;text-decoration:none;padding:4px 10px;border:1px solid #bfdbfe;border-radius:6px;background:#eff6ff;font-size:.74rem;display:inline-block;}
+    .dash-table .dt-link .no-link{color:#94a3b8;font-style:italic;font-size:.74rem;}
+    .st-badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:700;white-space:nowrap;}
+    .st-badge.st-completed{background:#dcfce7;color:#166534;border:1px solid #86efac;}
+    .st-badge.st-stopped{background:#fef3c7;color:#92400e;border:1px solid #fde68a;}
+    .st-badge.st-error{background:#fef2f2;color:#991b1b;border:1px solid #fca5a5;}
+    .st-badge.st-generating{background:#ede9fe;color:#5b21b6;border:1px solid #c4b5fd;}
+    .st-badge.st-downloaded{background:#ccfbf1;color:#0f766e;border:1px solid #5eead4;}
+    .st-badge.st-restarted{background:#f0f7ff;color:#475569;border:1px solid #cbd5e1;text-decoration:line-through;opacity:.7;}
+    .dash-empty{text-align:center;padding:50px 20px;color:#93c5fd;font-size:.95rem;font-style:italic;}
+    .dash-loading{text-align:center;padding:50px 20px;color:#2563eb;font-size:.9rem;display:flex;align-items:center;justify-content:center;gap:10px;}
+    .dash-row-count{font-size:.78rem;color:#64748b;margin-top:10px;padding:0 4px;font-weight:500;}
+    .btn-resume-row{padding:5px 14px;border:1.5px solid #0d9488;border-radius:6px;background:linear-gradient(180deg,#14b8a6,#0d9488);color:white;font-size:.72rem;font-weight:700;cursor:pointer;box-shadow:0 2px 0 #0f766e;position:relative;top:0;white-space:nowrap;}
+    .btn-resume-row:hover{top:-1px;}
+    .btn-resume-row:disabled{opacity:.4;cursor:not-allowed;top:0;}
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="orb orb-1"></div>
+  <div class="orb orb-2"></div>
+  <header>
+    <img class="header-logo" src="https://learninganddevelopment.net/Koenig/Logo/logo.jpeg" alt="Koenig Solutions" id="headerLogo">
+    <div class="header-divider"></div>
+    <div class="header-text">
+      <h1>AI Coursebook Generator</h1>
+      <p>Per-page server backup · GPT Image 2 visuals embedded as base64 · Resume any unfinished generation</p>
+    </div>
+    <button class="btn-dashboard" id="btnDashboard" title="My Coursebooks">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="4" rx="1"/><rect x="14" y="10" width="7" height="7" rx="1"/><rect x="3" y="13" width="7" height="4" rx="1"/></svg>
+      My Coursebooks
+    </button>
+  </header>
+  <div class="panels">
+    <div class="left">
+      <div class="prog" id="prog">
+        <div class="prog-head"><span class="prog-st" id="progSt">Generating...</span><span class="prog-pct" id="progPct">0%</span></div>
+        <div class="prog-bar"><div class="prog-fill" id="progFill"></div></div>
+      </div>
+      <div class="smsg" id="smsg"><span id="smsgI"></span><span id="smsgT"></span></div>
+      <div class="retry-badge" id="retryBadge">⚠️ Errors: <span class="rb-count" id="retryCount">0</span> — Click <b>▶ Resume</b> to retry</div>
+      <div class="flink" id="flink">Server file: <a id="flinkA" href="#" target="_blank"></a></div>
+      <div class="db-status" id="dbStatus"></div>
+      <form id="form">
+        <div class="row">
+          <div class="fg">
+            <label>Your Name</label>
+            <select id="fName" required style="display:none;"><option value="">—</option></select>
+            <div class="ss-wrap" id="ssWrap">
+              <div class="ss-trigger" id="ssTrigger"><span id="ssLabel">Loading employees...</span><span class="ss-arrow">▼</span></div>
+              <div class="ss-panel" id="ssPanel">
+                <div class="ss-search-box"><input type="text" id="ssSearch" placeholder="Search by name..." autocomplete="off"></div>
+                <div id="ssOptions"><div class="ss-loading"><span class="spinner"></span> Loading...</div></div>
+              </div>
+            </div>
+          </div>
+          <div class="fg"><label>Email</label><input type="email" id="fEmail" placeholder="Auto-filled" readonly></div>
+        </div>
+        <div class="course-mode-box" id="courseModeBox">
+          <span class="cm-label">Coursebook Title Source</span>
+          <div class="course-mode-options">
+            <div class="course-mode-opt"><input type="radio" name="courseMode" id="cmRms" value="rms" checked><label for="cmRms">Course available in RMS<span>DB upload enabled</span></label></div>
+            <div class="course-mode-opt"><input type="radio" name="courseMode" id="cmCustom" value="custom"><label for="cmCustom">Custom course<span>Download only</span></label></div>
+          </div>
+        </div>
+
+        <div class="fg" id="rmsCourseBox">
+          <label>RMS Course Name <span class="hint">(type to search all RMS courses)</span></label>
+          <div class="rms-course-wrap" id="rmsCourseWrap">
+            <input type="text" id="rmsCourseSearch" placeholder="Start typing course name..." autocomplete="off">
+            <input type="hidden" id="rmsCourseId">
+            <div class="rms-course-panel" id="rmsCoursePanel"><div id="rmsCourseOptions"><div class="rms-course-empty">Loading RMS courses...</div></div></div>
+          </div>
+          <div class="course-mode-note" id="rmsCourseNote">Select an exact RMS course to enable DB upload after PDF generation.</div>
+        </div>
+
+        <div class="fg" id="customCourseBox" style="display:none;">
+          <label>Custom Coursebook Title <span class="hint">(not uploaded to DB)</span></label>
+          <input type="text" id="fTitle" placeholder="Introduction to ISO 9001 Quality Management" required>
+          <div class="course-mode-note">Custom coursebooks are generated for download only. DB upload is skipped.</div>
+        </div>
+
+        <div class="tgl-box">
+          <div class="tgl-lbl">Clean PDF Rebuild <span class="tgl-hint">Upload an authorized PDF and rebuild it page-by-page without repeated watermark/header/footer text</span></div>
+          <label class="tgl"><input type="checkbox" id="pdfMode"><span class="tgl-sl"></span></label>
+          <span class="tgl-st off" id="pdfModeSt">OFF</span>
+        </div>
+        <div class="fg" id="pdfUploadBox" style="display:none;">
+          <label>Upload PDF <span class="hint">(text-based PDFs work best)</span></label>
+          <input type="file" id="pdfFile" accept="application/pdf">
+        </div>
+        <div class="tgl-box" id="pdfPermissionBox" style="display:none;">
+          <div class="tgl-lbl">I confirm I have permission to process this PDF <span class="tgl-hint">Use only for documents you own or are authorized to convert</span></div>
+          <label class="tgl"><input type="checkbox" id="pdfPermission"><span class="tgl-sl"></span></label>
+          <span class="tgl-st off" id="pdfPermissionSt">NO</span>
+        </div>
+        <div class="row">
+          <div class="fg"><label>Est. Pages <span class="hint">(50-500)</span></label><input type="number" id="fPages" min="50" max="500" value="100" required></div>
+          <div class="fg"><label>Number of Days <span class="hint">(for TOC)</span></label><input type="number" id="fDays" min="1" max="30" value="3"></div>
+        </div>
+        <div class="tgl-box">
+          <div class="tgl-lbl">GPT Image 2 Visuals <span class="tgl-hint">Creates photos, diagrams, and infographics using page headers — embedded as base64</span></div>
+          <label class="tgl"><input type="checkbox" id="fImg" checked><span class="tgl-sl"></span></label>
+          <span class="tgl-st on" id="imgSt">ON</span>
+        </div>
+        <div class="fg">
+          <div class="toc-row">
+            <div class="fg"><label>Table of Contents <span class="hint">(indent subtopics with spaces/dashes)</span></label></div>
+            <button type="button" id="btnToc" class="btn-toc">Generate TOC</button>
+          </div>
+          <textarea id="fToc" placeholder="1. Introduction to Quality Management
+   - What is Quality Management
+   - History and Evolution
+
+2. ISO 9001 Standards
+   - Understanding ISO 9001
+   - Key Clauses" required></textarea>
+        </div>
+        <div class="btns">
+          <button type="submit" id="btnGo" class="btn btn-go"><span id="btnGoT">Generate Coursebook</span></button>
+          <button type="button" id="btnPause" class="btn btn-pause"><span id="btnPauseT">⏸ Pause</span></button>
+          <button type="button" id="btnStop" class="btn btn-stop"><span id="btnStopT">Stop Generation</span></button>
+          <button type="button" id="btnPdf" class="btn btn-pdf" disabled><span id="btnPdfT">📄 Download PDF</span></button>
+          <button type="button" id="btnHtml" class="btn btn-html" disabled><span id="btnHtmlT">🌐 Download HTML</span></button>
+        </div>
+      </form>
+      <div class="logs-sec">
+        <div class="logs-hdr"><h3>Logs</h3><button class="logs-tog" id="logsTog">Show</button></div>
+        <div class="logbox hidden" id="logbox"><div class="le-empty">Logs appear when generation starts...</div></div>
+      </div>
+    </div>
+    <div class="right">
+      <div class="prev-header">
+        <h2>Live Preview — Click to Edit</h2>
+        <span class="page-counter" id="pageCtr">0 pages</span>
+      </div>
+      <div class="ed-toolbar" id="edToolbar">
+        <button type="button" id="tbBold" title="Bold"><b>B</b></button>
+        <button type="button" id="tbItalic" title="Italic"><i>I</i></button>
+        <button type="button" id="tbUnderline" title="Underline"><u>U</u></button>
+        <button type="button" id="tbAlignL" title="Left">≡L</button>
+        <button type="button" id="tbAlignC" title="Center">≡C</button>
+        <button type="button" id="tbAlignJ" title="Justify">≡J</button>
+        <button type="button" id="tbAiImg" class="tb-ai" title="AI Visual">🖼 AI Visual</button>
+        <div class="ed-autosave" id="edAutosave">✓ Auto-saved</div>
+      </div>
+      <div class="preview-wrap">
+        <div class="preview-container" id="previewContainer">
+          <div class="prev-empty" id="prevEmpty">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="9" y1="6" x2="15" y2="6"/><line x1="9" y1="10" x2="15" y2="10"/><line x1="9" y1="14" x2="12" y2="14"/></svg>
+            <h3>Pages appear here in real-time</h3>
+            <p>Each page is saved to VPS storage with images embedded — fully restorable on Resume<br>Click in the preview to edit directly</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="aiImageModal">
+  <div class="modal">
+    <div class="modal-hdr"><h3>🖼 GPT Image 2 Visual Generator</h3><button class="modal-close" id="modalClose">×</button></div>
+    <div class="modal-body">
+      <div class="sel-img-info" id="selImgInfo" style="display:none;">
+        <img id="selImgPreview" src="" alt="Selected">
+        <div><strong>Selected Image</strong><span id="selImgSize"></span></div>
+      </div>
+      <p>Describe the visual you want to generate (image, diagram, infographic, workflow, etc.):</p>
+      <textarea id="imgPrompt" placeholder="e.g., infographic showing five stages of ISO 9001 audit readiness"></textarea>
+    </div>
+    <div class="modal-footer">
+      <button class="btn-cancel" id="imgCancel">Cancel</button>
+      <button class="btn-purple" id="imgGenerate"><span id="imgGenT">🎨 Generate Visual</span></button>
+    </div>
+  </div>
+</div>
+
+<div class="dash-bg" id="dashBg">
+  <div class="dash-header">
+    <img class="header-logo" src="https://learninganddevelopment.net/Koenig/Logo/logo.jpeg" alt="Logo" id="dashLogo">
+    <div class="header-divider"></div>
+    <h1>My Coursebooks — Generation History</h1>
+    <button class="dash-refresh" id="dashRefresh">↻ Refresh</button>
+    <button class="dash-close" id="dashClose">✕ Close</button>
+  </div>
+  <div class="dash-content">
+    <div class="dash-stats" id="dashStats">
+      <div class="dash-stat total"><div class="ds-label">My Coursebooks</div><div class="ds-value" id="dsTotal">—</div></div>
+      <div class="dash-stat completed"><div class="ds-label">Completed</div><div class="ds-value" id="dsCompleted">—</div></div>
+      <div class="dash-stat stopped"><div class="ds-label">Stopped</div><div class="ds-value" id="dsStopped">—</div></div>
+      <div class="dash-stat errors"><div class="ds-label">Errors</div><div class="ds-value" id="dsErrors">—</div></div>
+      <div class="dash-stat generating"><div class="ds-label">In Progress</div><div class="ds-value" id="dsGenerating">—</div></div>
+      <div class="dash-stat cost"><div class="ds-label">My Total Cost</div><div class="ds-value" id="dsCost">—</div></div>
+    </div>
+    <div class="dash-filters">
+      <div class="df-group"><label>Search</label><input type="text" id="dfSearch" placeholder="Title or keyword..."></div>
+      <div class="df-group"><label>Status</label><select id="dfStatus"><option value="">All</option><option value="completed">Completed</option><option value="stopped">Stopped</option><option value="error">Error</option><option value="generating">Generating</option><option value="downloaded">Downloaded</option></select></div>
+      <div class="df-group"><label>From</label><input type="date" id="dfDateFrom"></div>
+      <div class="df-group"><label>To</label><input type="date" id="dfDateTo"></div>
+      <button class="df-clear" id="dfClear">Clear</button>
+    </div>
+    <div class="dash-table-wrap">
+      <table class="dash-table" id="dashTable">
+        <thead><tr><th data-col="timestamp">Date <span class="sort-arrow">▼</span></th><th data-col="title">Title <span class="sort-arrow">▼</span></th><th data-col="status">Status <span class="sort-arrow">▼</span></th><th data-col="cost">Cost <span class="sort-arrow">▼</span></th><th>Server file</th><th>Download</th><th>Actions</th></tr></thead>
+        <tbody id="dashBody"><tr><td colspan="7"><div class="dash-loading"><span class="spinner"></span> Loading...</div></td></tr></tbody>
+      </table>
+    </div>
+    <div class="dash-row-count" id="dashRowCount"></div>
+  </div>
+</div>
+
+<script>
+// ============================================
+// STATE
+// ============================================
+var isGen=false, jobId=null, stopRequested=false, isPaused=false, errorRetryCount=0;
+var currentGenerationMode='coursebook';
+var previewIframe=null, htmlHeader='', accumulatedHTML='', livePageCount=0;
+var selectedImage=null, contentEdited=false, hasUserEdits=false;
+var cachedFileId=null, cachedPdfBase64=null, cachedPdfFileName=null;
+var rmsCourseList=[], rmsCourseLoaded=false, selectedRmsCourse=null;
+var isConvertingPdf=false;
+var autoSaveTimeout=null;
+var CHUNK_TIMEOUT_MS=300000, chunkTimeoutId=null;
+
+// v9.1: defer Drive backup cleanup until AFTER the user successfully downloads.
+// Was: cleanup ran immediately on completion — deleted backups before the user could
+// use them. Now the backups persist until the user has the file on disk.
+var pendingCleanupJobId=null;
+
+// ============================================
+// LOGO
+// ============================================
+var logoBase64=null;
+function preloadLogo(){
+  google.script.run.withSuccessHandler(function(r){
+    if(r&&r.success&&r.data){
+      logoBase64=r.data;
+      var h=document.getElementById('headerLogo'); if(h)h.src=logoBase64;
+      var d=document.getElementById('dashLogo'); if(d)d.src=logoBase64;
+    }
+  }).withFailureHandler(function(){}).fetchLogoBase64();
+}
+preloadLogo();
+
+// ============================================
+// EMPLOYEE DROPDOWN
+// ============================================
+var employeeMap={},employeeNames=[];
+var ssWrap=document.getElementById('ssWrap'),ssTrigger=document.getElementById('ssTrigger'),ssLabel=document.getElementById('ssLabel'),ssPanel=document.getElementById('ssPanel'),ssSearch=document.getElementById('ssSearch'),ssOptions=document.getElementById('ssOptions'),fNameSelect=document.getElementById('fName');
+function enableManualEmployeeEntry(reason){
+  employeeNames=[]; employeeMap={};
+  if(ssWrap) ssWrap.style.display='none';
+  var current=document.getElementById('fName');
+  if(current && current.tagName.toLowerCase()==='select'){
+    var input=document.createElement('input');
+    input.type='text';
+    input.id='fName';
+    input.placeholder='Enter your name';
+    input.required=true;
+    input.style.display='block';
+    current.parentNode.replaceChild(input,current);
+    fNameSelect=input;
+  }
+  var email=document.getElementById('fEmail');
+  if(email){
+    email.readOnly=false;
+    email.placeholder='Enter your email';
+    email.style.background='#ffffff';
+    email.style.cursor='text';
+  }
+  if(ssLabel) ssLabel.textContent='Manual entry';
+  if(ssOptions) ssOptions.innerHTML='<div class="ss-empty">Employee list unavailable. Enter name and email manually.</div>';
+  addLog({time:new Date().toLocaleTimeString(),message:'Employee list unavailable' + (reason ? ': '+reason : '') + '. Manual name/email entry enabled.',type:'info'});
+}
+function loadEmployeeList(){
+  google.script.run.withSuccessHandler(function(r){
+    if(r&&r.success&&r.employees&&r.employees.length>0){
+      employeeNames=[];fNameSelect.innerHTML='<option value="">—</option>';
+      for(var i=0;i<r.employees.length;i++){var emp=r.employees[i];employeeMap[emp.name]=emp.email;employeeNames.push(emp.name);var opt=document.createElement('option');opt.value=emp.name;opt.textContent=emp.name;fNameSelect.appendChild(opt);}
+      ssLabel.textContent='— Select your name —';renderSSOptions('');
+    } else {
+      enableManualEmployeeEntry(r&&r.message?r.message:'No employees returned');
+    }
+  }).withFailureHandler(function(err){enableManualEmployeeEntry(err&&err.message?err.message:'Script call failed');}).fetchEmployeeList();
+}
+loadEmployeeList();
+function renderSSOptions(q){var query=(q||'').toLowerCase().trim();var filtered=query?employeeNames.filter(function(n){return n.toLowerCase().indexOf(query)!==-1;}):employeeNames;if(!filtered.length){ssOptions.innerHTML='<div class="ss-empty">No match</div>';return;}var html='',sel=fNameSelect.value;for(var i=0;i<filtered.length;i++){html+='<div class="ss-opt'+(filtered[i]===sel?' active':'')+'" data-name="'+filtered[i].replace(/"/g,'&quot;')+'">'+filtered[i]+'</div>';}ssOptions.innerHTML=html;}
+var ssParentRow=ssWrap.closest('.row')||ssWrap.parentElement;
+function ssElevate(on){ssParentRow.style.zIndex=on?'9999':'';ssParentRow.style.position=on?'relative':'';}
+ssTrigger.addEventListener('click',function(e){e.stopPropagation();ssWrap.classList.toggle('open');var isOpen=ssWrap.classList.contains('open');ssElevate(isOpen);if(isOpen){ssSearch.value='';renderSSOptions('');setTimeout(function(){ssSearch.focus();},50);}});
+ssSearch.addEventListener('input',function(){renderSSOptions(ssSearch.value);});
+ssOptions.addEventListener('click',function(e){var opt=e.target.closest('.ss-opt');if(!opt)return;var name=opt.getAttribute('data-name');fNameSelect.value=name;ssLabel.textContent=name;ssWrap.classList.remove('open');ssElevate(false);document.getElementById('fEmail').value=employeeMap[name]||'';});
+document.addEventListener('click',function(e){if(!ssWrap.contains(e.target)){ssWrap.classList.remove('open');ssElevate(false);}});
+
+var $=function(id){return document.getElementById(id);};
+// ============================================
+// RMS COURSE MODE + SEARCHABLE DROPDOWN
+// ============================================
+function getCourseMode(){
+  var checked=document.querySelector('input[name="courseMode"]:checked');
+  return checked?checked.value:'custom';
+}
+function getEffectiveCourseName(){
+  if(getCourseMode()==='rms') return selectedRmsCourse ? selectedRmsCourse.courseName : ($('rmsCourseSearch') ? $('rmsCourseSearch').value.trim() : '');
+  return $('fTitle') ? $('fTitle').value.trim() : '';
+}
+function getSelectedRmsCourseName(){return selectedRmsCourse ? selectedRmsCourse.courseName : '';}
+function getSelectedRmsCourseId(){return selectedRmsCourse ? (selectedRmsCourse.courseId||'') : '';}
+function setCourseMode(mode){
+  mode=(mode==='rms')?'rms':'custom';
+  var r=$('cmRms'), c=$('cmCustom');
+  if(r)r.checked=(mode==='rms'); if(c)c.checked=(mode==='custom');
+  updateCourseModeUI();
+}
+function updateCourseModeUI(){
+  var mode=getCourseMode();
+  if($('rmsCourseBox')) $('rmsCourseBox').style.display=mode==='rms'?'block':'none';
+  if($('customCourseBox')) $('customCourseBox').style.display=mode==='custom'?'block':'none';
+  if($('fTitle')) $('fTitle').required=(mode==='custom');
+  if($('rmsCourseSearch')) $('rmsCourseSearch').required=(mode==='rms');
+  if(mode==='rms'){
+    if($('fTitle') && selectedRmsCourse) $('fTitle').value=selectedRmsCourse.courseName;
+    loadRmsCourseList();
+  } else {
+    closeRmsCourseDropdown();
+  }
+}
+function loadRmsCourseList(){
+  if(rmsCourseLoaded || !window.google || !google.script || !google.script.run) return;
+  rmsCourseLoaded=true;
+  if($('rmsCourseOptions')) $('rmsCourseOptions').innerHTML='<div class="rms-course-empty"><span class="spinner"></span> Loading RMS courses...</div>';
+  google.script.run
+    .withSuccessHandler(function(r){
+      if(r&&r.success&&r.courses){
+        rmsCourseList=r.courses||[];
+        renderRmsCourseOptions(($('rmsCourseSearch')&&$('rmsCourseSearch').value)||'');
+        if($('rmsCourseNote')) $('rmsCourseNote').textContent='Loaded '+rmsCourseList.length+' RMS courses. Select an exact course to enable DB upload.';
+      } else {
+        if($('rmsCourseOptions')) $('rmsCourseOptions').innerHTML='<div class="rms-course-empty">Could not load RMS courses</div>';
+        if($('rmsCourseNote')) $('rmsCourseNote').textContent='RMS course list failed to load. You can switch to Custom course to generate/download only.';
+      }
+    })
+    .withFailureHandler(function(err){
+      if($('rmsCourseOptions')) $('rmsCourseOptions').innerHTML='<div class="rms-course-empty">RMS course API error</div>';
+      if($('rmsCourseNote')) $('rmsCourseNote').textContent='RMS course API error: '+(err&&err.message?err.message:err);
+    })
+    .fetchRmsCourseList();
+}
+function openRmsCourseDropdown(){var w=$('rmsCourseWrap'); if(w)w.classList.add('open');}
+function closeRmsCourseDropdown(){var w=$('rmsCourseWrap'); if(w)w.classList.remove('open');}
+function renderRmsCourseOptions(query){
+  var box=$('rmsCourseOptions'); if(!box)return;
+  var q=(query||'').toLowerCase().trim();
+  var matches=(rmsCourseList||[]).filter(function(c){
+    var name=(c.courseName||'').toLowerCase();
+    var vendor=(c.vendorName||'').toLowerCase();
+    return !q || name.indexOf(q)!==-1 || vendor.indexOf(q)!==-1;
+  }).slice(0,80);
+  if(!matches.length){box.innerHTML='<div class="rms-course-empty">No RMS course found. Use Custom course for download-only.</div>';return;}
+  var html='';
+  for(var i=0;i<matches.length;i++){
+    var c=matches[i];
+    html+='<div class="rms-course-option" data-idx="'+(rmsCourseList.indexOf(c))+'"><strong>'+esc(c.courseName||'')+'</strong>'+(c.vendorName?'<span class="vendor">Vendor: '+esc(c.vendorName)+'</span>':'')+'</div>';
+  }
+  box.innerHTML=html;
+}
+function selectRmsCourse(course){
+  selectedRmsCourse=course;
+  if($('rmsCourseSearch')) $('rmsCourseSearch').value=course.courseName||'';
+  if($('rmsCourseId')) $('rmsCourseId').value=course.courseId||'';
+  if($('fTitle')) $('fTitle').value=course.courseName||'';
+  if($('rmsCourseNote')) $('rmsCourseNote').textContent='Selected RMS course: '+(course.courseName||'')+'. DB upload will be enabled after PDF generation.';
+  closeRmsCourseDropdown();
+}
+function applyResumeCourseMode(cfg){
+  cfg=cfg||{};
+  setCourseMode(cfg.courseMode||'custom');
+  if((cfg.courseMode||'custom')==='rms'){
+    selectedRmsCourse={courseName:cfg.rmsCourseName||cfg.courseName||'',courseId:cfg.rmsCourseId||'',vendorName:''};
+    if($('rmsCourseSearch')) $('rmsCourseSearch').value=selectedRmsCourse.courseName;
+    if($('rmsCourseId')) $('rmsCourseId').value=selectedRmsCourse.courseId;
+    if($('fTitle')) $('fTitle').value=selectedRmsCourse.courseName;
+  } else {
+    selectedRmsCourse=null;
+    if($('fTitle')) $('fTitle').value=cfg.courseName||'';
+  }
+}
+['cmRms','cmCustom'].forEach(function(id){var el=$(id); if(el)el.addEventListener('change',updateCourseModeUI);});
+if($('rmsCourseSearch')){
+  $('rmsCourseSearch').addEventListener('focus',function(){loadRmsCourseList();renderRmsCourseOptions(this.value);openRmsCourseDropdown();});
+  $('rmsCourseSearch').addEventListener('input',function(){selectedRmsCourse=null;if($('fTitle'))$('fTitle').value=this.value;renderRmsCourseOptions(this.value);openRmsCourseDropdown();});
+  $('rmsCourseSearch').addEventListener('blur',function(){setTimeout(closeRmsCourseDropdown,180);});
+}
+if($('rmsCourseOptions')){
+  $('rmsCourseOptions').addEventListener('mousedown',function(e){
+    var opt=e.target.closest('.rms-course-option'); if(!opt)return;
+    e.preventDefault();
+    var idx=parseInt(opt.getAttribute('data-idx'),10);
+    if(!isNaN(idx)&&rmsCourseList[idx]) selectRmsCourse(rmsCourseList[idx]);
+  });
+}
+setTimeout(updateCourseModeUI,0);
+
+// ============================================
+// DOM REFS
+// ============================================
+var $=function(id){return document.getElementById(id);};
+var form=$('form'),btnGo=$('btnGo'),btnGoT=$('btnGoT'),btnPdf=$('btnPdf'),btnPdfT=$('btnPdfT');
+var btnHtml=$('btnHtml'),btnHtmlT=$('btnHtmlT');
+var btnStop=$('btnStop'),btnStopT=$('btnStopT');
+var btnPause=$('btnPause'),btnPauseT=$('btnPauseT');
+var prog=$('prog'),progSt=$('progSt'),progPct=$('progPct'),progFill=$('progFill');
+var smsg=$('smsg'),smsgI=$('smsgI'),smsgT=$('smsgT');
+var flink=$('flink'),flinkA=$('flinkA');
+var dbStatus=$('dbStatus');
+var logbox=$('logbox'),previewContainer=$('previewContainer'),prevEmpty=$('prevEmpty'),pageCtr=$('pageCtr');
+var retryBadge=$('retryBadge'),retryCount=$('retryCount');
+var edToolbar=$('edToolbar'),edAutosave=$('edAutosave');
+
+
+// ============================================
+// CLEAN PDF REBUILD — CLIENT PDF EXTRACTION
+// v4 large-PDF fix: do NOT extract/send the whole PDF at once.
+// The flow now opens the PDF, creates the server job, samples a few pages
+// to detect repeated watermark/header/footer text, then extracts + uploads
+// only a few pages at a time.
+// ============================================
+var pdfJsLoaded=false;
+var PDF_EXTRACT_UPLOAD_BATCH_SIZE=3; // keep both browser work and Apps Script calls small
+var PDF_SAMPLE_MAX_PAGES=10;
+
+function loadScriptOnce(src){return new Promise(function(resolve,reject){var existing=document.querySelector('script[src="'+src+'"]');if(existing){if(existing._loaded){resolve();return;}existing.addEventListener('load',resolve);existing.addEventListener('error',function(){reject(new Error('Failed to load '+src));});return;}var s=document.createElement('script');s.src=src;s.onload=function(){s._loaded=true;resolve();};s.onerror=function(){reject(new Error('Failed to load '+src));};document.head.appendChild(s);});}
+function ensurePdfJs(){if(pdfJsLoaded&&window.pdfjsLib)return Promise.resolve();return loadScriptOnce('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js').then(function(){pdfjsLib.GlobalWorkerOptions.workerSrc='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';pdfJsLoaded=true;});}
+function waitSmall(ms){return new Promise(function(resolve){setTimeout(resolve,ms||25);});}
+function openPdfDocument(file){return ensurePdfJs().then(function(){return file.arrayBuffer();}).then(function(buffer){return pdfjsLib.getDocument({data:buffer}).promise;});}
+function extractOnePdfPage(pdf,pageNum,totalPages,labelPrefix){
+  if(stopRequested) return Promise.reject(new Error('Stopped by user'));
+  updProg(pageNum-1,totalPages,(labelPrefix||'Extracting PDF page ') + pageNum + '/' + totalPages);
+  return pdf.getPage(pageNum).then(function(page){
+    return page.getTextContent().then(function(textContent){
+      var lines=[];
+      textContent.items.forEach(function(item){var str=(item.str||'').trim();if(str)lines.push(str);});
+      try{page.cleanup();}catch(e){}
+      updProg(pageNum,totalPages,'Extracted PDF page '+pageNum+'/'+totalPages);
+      return {pageNumber:pageNum,text:lines.join('\n')};
+    });
+  });
+}
+function getSamplePageNumbers(total){
+  var wanted={},nums=[];
+  function add(n){n=Math.max(1,Math.min(total,Math.round(n)));if(!wanted[n]){wanted[n]=true;nums.push(n);}}
+  add(1);add(2);add(3);add(total);add(total-1);add(Math.ceil(total/2));
+  for(var i=1;i<=PDF_SAMPLE_MAX_PAGES;i++)add(1+((total-1)*i/(PDF_SAMPLE_MAX_PAGES+1)));
+  nums.sort(function(a,b){return a-b;});
+  return nums.slice(0,PDF_SAMPLE_MAX_PAGES);
+}
+function detectRepeatedPdfLinesClient(pages){
+  var counts={},total=pages.length||1;
+  pages.forEach(function(p){
+    var seen={};
+    String(p.text||'').split(/\n+/).map(function(x){return x.trim().replace(/\s+/g,' ');}).filter(function(x){return x.length>=3&&x.length<=140;}).forEach(function(line){seen[line]=true;});
+    Object.keys(seen).forEach(function(line){counts[line]=(counts[line]||0)+1;});
+  });
+  var repeated=[];
+  Object.keys(counts).forEach(function(line){if(counts[line]>=Math.max(2,Math.ceil(total*0.55)))repeated.push(line);});
+  return repeated;
+}
+function stripRepeatedPdfLinesClient(text,repeatedLines){
+  var map={};(repeatedLines||[]).forEach(function(x){map[String(x).trim()]=true;});
+  return String(text||'').split(/\n+/).map(function(x){return x.trim().replace(/\s+/g,' ');}).filter(function(line){return line&&!map[line];}).join('\n');
+}
+function detectRepeatedLinesFromPdfSamples(pdf,totalPages){
+  var sampleNums=getSamplePageNumbers(totalPages),samples=[],idx=0;
+  addLog({time:new Date().toLocaleTimeString(),message:'Sampling '+sampleNums.length+' pages to detect repeated watermark/header/footer text...',type:'info'});
+  function next(){
+    if(idx>=sampleNums.length)return Promise.resolve(detectRepeatedPdfLinesClient(samples));
+    var n=sampleNums[idx++];
+    updProg(idx-1,sampleNums.length,'Sampling PDF page '+n+' for repeated text');
+    return extractOnePdfPage(pdf,n,totalPages,'Sampling PDF page ').then(function(p){samples.push(p);return waitSmall(20);}).then(next);
+  }
+  return next();
+}
+function uploadPdfCleanPagesInBatches(jid,pages,batchSize){
+  batchSize=batchSize||PDF_EXTRACT_UPLOAD_BATCH_SIZE;
+  var idx=0,total=pages.length;
+  function uploadNext(){
+    if(idx>=total)return Promise.resolve();
+    var batch=pages.slice(idx,idx+batchSize);
+    updProg(idx,total,'Uploading extracted pages '+batch[0].pageNumber+'-'+batch[batch.length-1].pageNumber+'/'+total);
+    return new Promise(function(resolve,reject){
+      google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).uploadPdfCleanPageBatch(jid,batch);
+    }).then(function(r){
+      if(!r||!r.success)throw new Error((r&&r.message)||'Source page upload failed');
+      addLogs(r.logs);
+      idx+=batch.length;
+      updProg(idx,total,'Uploaded extracted pages '+idx+'/'+total);
+      return waitSmall(40).then(uploadNext);
+    });
+  }
+  return uploadNext();
+}
+function extractAndUploadPdfInSmallChunks(pdf,jid,totalPages,repeatedLines){
+  var startPage=1;
+  function nextBatch(){
+    if(stopRequested) return Promise.reject(new Error('Stopped by user'));
+    if(startPage>totalPages)return Promise.resolve();
+    var endPage=Math.min(totalPages,startPage+PDF_EXTRACT_UPLOAD_BATCH_SIZE-1);
+    var pages=[],n=startPage;
+    addLog({time:new Date().toLocaleTimeString(),message:'Extracting small batch: pages '+startPage+'-'+endPage+' of '+totalPages,type:'info'});
+    function extractNext(){
+      if(n>endPage)return Promise.resolve();
+      return extractOnePdfPage(pdf,n,totalPages,'Extracting PDF page ').then(function(p){
+        pages.push({pageNumber:p.pageNumber,text:p.text||'',cleanedText:stripRepeatedPdfLinesClient(p.text||'',repeatedLines)});
+        n++;
+        return waitSmall(15).then(extractNext);
+      });
+    }
+    return extractNext().then(function(){
+      return uploadPdfCleanPagesInBatches(jid,pages,PDF_EXTRACT_UPLOAD_BATCH_SIZE);
+    }).then(function(){
+      addLog({time:new Date().toLocaleTimeString(),message:'Uploaded small batch: pages '+startPage+'-'+endPage,type:'success'});
+      startPage=endPage+1;
+      pages=null;
+      return waitSmall(80).then(nextBatch);
+    });
+  }
+  return nextBatch();
+}
+function continueActiveJob(jid){if(currentGenerationMode==='pdf_clean_rebuild')processPdfCleanChunk(jid);else processChunk(jid);}
+function processPdfCleanChunk(jid){if(isPaused||stopRequested)return;clearTimeout(chunkTimeoutId);chunkTimeoutId=setTimeout(function(){if(isGen&&!isPaused&&!stopRequested){errorRetryCount++;retryCount.textContent=errorRetryCount;retryBadge.classList.add('vis');doPause('Server timeout — click Resume to retry');}},CHUNK_TIMEOUT_MS);google.script.run.withSuccessHandler(function(r){clearTimeout(chunkTimeoutId);addLogs(r.logs);if(r.htmlChunk)appendToPreview(r.htmlChunk);if(isPaused||stopRequested){if(stopRequested){resetUI(true);showSt('success','Stopped. '+livePageCount+' pages are ready for download.');}return;}if(!r.success&&!r.done){errorRetryCount++;retryCount.textContent=errorRetryCount;retryBadge.classList.add('vis');doPause('Error: '+(r.error||'Unknown')+' — Click Resume to retry');return;}updProg(r.currentTask,r.totalTasks,'Rebuilding PDF...');if(r.done){resetUI(true);showSt('success','Clean PDF rebuild complete. You can download PDF or HTML now.');pendingCleanupJobId=jid;}else setTimeout(function(){processPdfCleanChunk(jid);},100);}).withFailureHandler(function(err){clearTimeout(chunkTimeoutId);errorRetryCount++;retryCount.textContent=errorRetryCount;retryBadge.classList.add('vis');addLog({time:new Date().toLocaleTimeString(),message:'Error: '+err.message,type:'error'});doPause('Server error — Click Resume to retry');}).processNextPdfCleanChunk(jid);}
+function startPdfCleanRebuild(){
+  var file=$('pdfFile').files&&$('pdfFile').files[0];
+  if(getCourseMode()==='rms'&&!selectedRmsCourse){showSt('error','Please select an RMS course from the dropdown.');return;}
+  var title=getEffectiveCourseName()||(file?file.name.replace(/\.pdf$/i,''):'Clean PDF Rebuild');
+  var name=$('fName').value.trim();
+  var email=$('fEmail').value.trim();
+  var permissionConfirmed=$('pdfPermission').checked;
+  if(!file){showSt('error','Please upload a PDF.');return;}
+  if(!permissionConfirmed){showSt('error','Please tick the orange permission checkbox below the PDF upload field, then click Rebuild Uploaded PDF again.');return;}
+
+  currentGenerationMode='pdf_clean_rebuild';isGen=true;stopRequested=false;isPaused=false;errorRetryCount=0;pendingCleanupJobId=null;cachedFileId=null;contentEdited=false;hasUserEdits=false;
+  btnGo.disabled=true;btnGoT.textContent='Preparing PDF...';btnPdf.disabled=true;btnHtml.disabled=true;$('btnToc').disabled=true;clearLogs();hideSt();hideDbStatus();retryBadge.classList.remove('vis');
+  btnStop.classList.add('vis');btnStop.disabled=false;btnStopT.textContent='Stop Generation';btnPause.classList.add('vis');btnPause.disabled=false;btnPauseT.textContent='⏸ Pause';btnPause.classList.remove('resume');
+  addLog({time:new Date().toLocaleTimeString(),message:'Opening uploaded PDF in chunked mode...',type:'info'});updProg(0,1,'Opening PDF...');
+
+  var pdfDoc=null,totalPages=0;
+  openPdfDocument(file).then(function(pdf){
+    pdfDoc=pdf;totalPages=pdf.numPages||0;
+    if(!totalPages)throw new Error('No pages were found in this PDF.');
+    addLog({time:new Date().toLocaleTimeString(),message:'PDF opened: '+totalPages+' pages. Creating resumable job before extraction...',type:'success'});
+    return new Promise(function(resolve,reject){
+      google.script.run.withSuccessHandler(resolve).withFailureHandler(reject).initializePdfCleanJob({
+        title:title,
+        pageCount:totalPages,
+        userName:name,
+        userEmail:email,
+        permissionConfirmed:permissionConfirmed,
+        courseMode:getCourseMode(),
+        rmsCourseName:getSelectedRmsCourseName(),
+        rmsCourseId:getSelectedRmsCourseId(),
+        storeToDb:getCourseMode()==='rms'
+      });
+    });
+  }).then(function(r){
+    if(!r||!r.success)throw new Error((r&&r.message)||'Could not initialize PDF rebuild job');
+    addLogs(r.logs);jobId=r.jobId;if(r.htmlHeader)initializePreview(r.htmlHeader);
+    return detectRepeatedLinesFromPdfSamples(pdfDoc,totalPages).then(function(repeated){
+      addLog({time:new Date().toLocaleTimeString(),message:'Detected '+repeated.length+' repeated line(s). Extracting and uploading in '+PDF_EXTRACT_UPLOAD_BATCH_SIZE+'-page chunks...',type:'info'});
+      return extractAndUploadPdfInSmallChunks(pdfDoc,jobId,totalPages,repeated);
+    }).then(function(){return r;});
+  }).then(function(r){
+    try{if(pdfDoc&&pdfDoc.destroy)pdfDoc.destroy();}catch(e){}
+    updProg(0,r.totalTasks,'Rebuilding PDF...');
+    addLog({time:new Date().toLocaleTimeString(),message:'All extracted pages uploaded in small chunks. Starting page-by-page rebuild...',type:'success'});
+    processPdfCleanChunk(jobId);
+  }).catch(function(err){
+    try{if(pdfDoc&&pdfDoc.destroy)pdfDoc.destroy();}catch(e){}
+    resetUI();showSt('error',err.message||String(err));addLog({time:new Date().toLocaleTimeString(),message:'PDF rebuild failed: '+(err.message||err),type:'error'});
+  });
+}
+
+$('fImg').onchange=function(){$('imgSt').textContent=this.checked?'ON':'OFF';$('imgSt').className='tgl-st '+(this.checked?'on':'off');};
+
+$('pdfMode').onchange=function(){var on=this.checked;$('pdfModeSt').textContent=on?'ON':'OFF';$('pdfModeSt').className='tgl-st '+(on?'on':'off');$('pdfUploadBox').style.display=on?'block':'none';$('pdfPermissionBox').style.display=on?'block':'none';$('fToc').required=!on;if(on){$('btnGoT').textContent='Rebuild Uploaded PDF';}else{$('btnGoT').textContent='Generate Coursebook';}};
+$('pdfPermission').onchange=function(){$('pdfPermissionSt').textContent=this.checked?'Permission: YES':'Permission: NO';$('pdfPermissionSt').className='tgl-st '+(this.checked?'on':'off');};
+$('logsTog').onclick=function(){logbox.classList.toggle('hidden');this.textContent=logbox.classList.contains('hidden')?'Show':'Hide';};
+
+// Generate TOC
+$('btnToc').onclick=function(){
+  var title=getEffectiveCourseName(),days=parseInt($('fDays').value,10)||3;
+  if(!title){showSt('error',getCourseMode()==='rms'?'Select an RMS course first':'Enter a title first');return;}
+  var btn=$('btnToc');btn.disabled=true;btn.innerHTML='<span class="spinner"></span> Generating...';
+  google.script.run.withSuccessHandler(function(r){
+    btn.disabled=false;btn.innerHTML='Generate TOC';
+    if(r.success){$('fToc').value=r.toc;showSt('success','TOC generated!');}
+    else showSt('error','TOC failed');
+  }).withFailureHandler(function(err){btn.disabled=false;btn.innerHTML='Generate TOC';showSt('error',err.message);}).generateTOCFromTopic(title,days);
+};
+
+// ============================================
+// HELPERS
+// ============================================
+function esc(t){var d=document.createElement('div');d.textContent=t||'';return d.innerHTML;}
+function clearLogs(){logbox.innerHTML='';}
+function addLog(l){var e=logbox.querySelector('.le-empty');if(e)e.remove();var d=document.createElement('div');d.className='le '+(l.type||'info');d.innerHTML='<span class="le-t">['+l.time+']</span><span class="le-m">'+esc(l.message)+'</span>';logbox.appendChild(d);logbox.scrollTop=logbox.scrollHeight;}
+function addLogs(ls){if(ls)ls.forEach(addLog);}
+function showSt(type,msg){smsg.className='smsg vis '+type;smsgI.textContent=type==='success'?'✅':type==='error'?'❌':type==='warning'?'⚠️':'ℹ️';smsgT.textContent=msg;}
+function hideSt(){smsg.classList.remove('vis');}
+function ensureLogsVisible(){if(logbox&&logbox.classList.contains('hidden')){logbox.classList.remove('hidden');var t=$('logsTog');if(t)t.textContent='Hide';}}
+function showDbStatus(type,title,detail){if(!dbStatus)return;dbStatus.className='db-status vis '+(type||'info');var icon=type==='success'?'✅':type==='error'?'❌':type==='warning'?'⚠️':'ℹ️';dbStatus.innerHTML='<span>'+icon+'</span><span><span class="db-title">'+esc(title||'DB Status')+'</span><span class="db-detail">'+esc(detail||'')+'</span></span>';}
+function hideDbStatus(){if(dbStatus){dbStatus.className='db-status';dbStatus.innerHTML='';}}
+function addServerLogs(logs){if(logs&&logs.length){ensureLogsVisible();addLogs(logs);}}
+function updProg(c,t,s){var p=t>0?Math.round(c/t*100):0;prog.classList.add('vis');progSt.textContent=s||('Task '+c+'/'+t);progPct.textContent=p+'%';progFill.style.width=p+'%';}
+function hideProg(){prog.classList.remove('vis');}
+function showFL(url){if(url){flinkA.href=url;flinkA.textContent=url;flink.classList.add('vis');}}
+
+// ============================================
+// LIVE PREVIEW
+// ============================================
+function initializePreview(header){
+  prevEmpty.style.display='none';
+  edToolbar.classList.add('vis');
+  var old=previewContainer.querySelector('iframe'); if(old)old.remove();
+  selectedImage=null; htmlHeader=header; accumulatedHTML=''; livePageCount=0;
+  pageCtr.textContent='0 pages';
+  previewIframe=document.createElement('iframe');
+  previewContainer.appendChild(previewIframe);
+  try{
+    var doc=previewIframe.contentDocument||previewIframe.contentWindow.document;
+    doc.open();doc.write(header+'</body></html>');doc.close();
+    doc.body.contentEditable='true';doc.body.style.outline='none';doc.body.style.cursor='text';
+    doc.body.addEventListener('input',function(){triggerAutoSave();});
+    doc.addEventListener('keydown',function(e){
+      if(e.ctrlKey||e.metaKey){
+        if(e.key==='b'){e.preventDefault();execCmd('bold');}
+        if(e.key==='i'){e.preventDefault();execCmd('italic');}
+        if(e.key==='u'){e.preventDefault();execCmd('underline');}
+      }
+    });
+  }catch(e){console.error('initializePreview error:',e);}
+}
+
+function appendToPreview(chunk){
+  if(!chunk)return;
+  accumulatedHTML+=chunk;
+  if(!previewIframe){updatePageCount();return;}
+  try{
+    var doc=previewIframe.contentDocument||previewIframe.contentWindow.document;
+    if(doc&&doc.body){
+      var temp=doc.createElement('div');temp.innerHTML=chunk;
+      while(temp.firstChild)doc.body.appendChild(temp.firstChild);
+      setupImageSelection(doc);
+      doc.documentElement.scrollTop=doc.documentElement.scrollHeight;
+    }
+  }catch(e){
+    try{
+      var doc2=previewIframe.contentDocument||previewIframe.contentWindow.document;
+      doc2.open();doc2.write(htmlHeader+accumulatedHTML+'</body></html>');doc2.close();
+      doc2.body.contentEditable='true';
+    }catch(e2){}
+  }
+  updatePageCount();
+  if(livePageCount>0){
+    btnPdf.disabled=false;btnPdfT.textContent='📄 Download PDF ('+livePageCount+' pages)';
+    btnHtml.disabled=false;btnHtmlT.textContent='🌐 Download HTML ('+livePageCount+' pages)';
+  }
+}
+
+function updatePageCount(){
+  var counted=false;
+  if(previewIframe){
+    try{var doc=previewIframe.contentDocument||previewIframe.contentWindow.document;
+      if(doc&&doc.body){livePageCount=(doc.body.innerHTML.match(/<div class="page |<div class="content-section/g)||[]).length;counted=true;}}catch(e){}
+  }
+  if(!counted)livePageCount=(accumulatedHTML.match(/<div class="page |<div class="content-section/g)||[]).length;
+  pageCtr.textContent=livePageCount+' pages';
+}
+
+function getFullHTML(){
+  if(previewIframe){
+    try{var doc=previewIframe.contentDocument||previewIframe.contentWindow.document;
+      if(doc&&doc.head&&doc.body)return'<!DOCTYPE html>\n<html lang="en">\n<head>\n'+doc.head.innerHTML+'\n</head>\n<body>\n'+doc.body.innerHTML+'\n</body>\n</html>';}catch(e){}
+  }
+  return htmlHeader+accumulatedHTML+'\n</body>\n</html>';
+}
+
+function execCmd(cmd,val){if(!previewIframe)return;try{var doc=previewIframe.contentDocument||previewIframe.contentWindow.document;doc.execCommand(cmd,false,val||null);}catch(e){}triggerAutoSave();}
+function triggerAutoSave(){cachedFileId=null;contentEdited=true;hasUserEdits=true;if(autoSaveTimeout)clearTimeout(autoSaveTimeout);autoSaveTimeout=setTimeout(function(){edAutosave.classList.add('vis');setTimeout(function(){edAutosave.classList.remove('vis');},2000);},1000);}
+
+$('tbBold').onclick=function(){execCmd('bold');};
+$('tbItalic').onclick=function(){execCmd('italic');};
+$('tbUnderline').onclick=function(){execCmd('underline');};
+$('tbAlignL').onclick=function(){execCmd('justifyLeft');};
+$('tbAlignC').onclick=function(){execCmd('justifyCenter');};
+$('tbAlignJ').onclick=function(){execCmd('justifyFull');};
+$('tbAiImg').onclick=function(){openAIImageModal();};
+
+function setupImageSelection(doc){
+  var imgs=doc.querySelectorAll('img');
+  imgs.forEach(function(img){
+    if(img._sel)return;img._sel=true;
+    img.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();if(selectedImage)selectedImage.style.outline='';selectedImage=img;img.style.outline='3px solid #805ad5';img.style.outlineOffset='2px';});
+    img.addEventListener('mouseenter',function(){if(img!==selectedImage)img.style.outline='2px dashed #805ad5';img.style.cursor='pointer';});
+    img.addEventListener('mouseleave',function(){if(img!==selectedImage){img.style.outline='';img.style.outlineOffset='';}});
+  });
+}
+
+function openAIImageModal(){
+  if(!selectedImage){alert('Click an existing visual in the preview first.');return;}
+  $('selImgPreview').src=selectedImage.src;$('selImgSize').textContent='';$('selImgInfo').style.display='flex';
+  $('imgPrompt').value='';$('aiImageModal').classList.add('vis');
+}
+function closeAIImageModal(){$('aiImageModal').classList.remove('vis');}
+$('modalClose').onclick=closeAIImageModal;
+$('imgCancel').onclick=closeAIImageModal;
+$('aiImageModal').onclick=function(e){if(e.target===this)closeAIImageModal();};
+$('imgGenerate').onclick=function(){
+  var prompt=$('imgPrompt').value.trim();if(!prompt){alert('Enter a prompt.');return;}
+  if(!selectedImage){closeAIImageModal();return;}
+  $('imgGenerate').disabled=true;$('imgGenT').innerHTML='<span class="spinner"></span> Generating...';
+  google.script.run.withSuccessHandler(function(r){
+    $('imgGenerate').disabled=false;$('imgGenT').textContent='🎨 Generate Visual';
+    if(r.success&&r.imageUrl){selectedImage.src=r.imageUrl;triggerAutoSave();closeAIImageModal();addLog({time:new Date().toLocaleTimeString(),message:'Visual replaced!',type:'success'});}
+    else alert('Failed: '+(r.message||'Unknown'));
+  }).withFailureHandler(function(err){$('imgGenerate').disabled=false;$('imgGenT').textContent='🎨 Generate Visual';alert(err.message);}).generateSingleImage(prompt);
+};
+
+// ============================================
+// PAUSE / RESUME
+// ============================================
+function doPause(reason){
+  if(!isGen||isPaused)return;isPaused=true;clearTimeout(chunkTimeoutId);
+  btnPauseT.textContent='▶ Resume';btnPause.classList.add('resume');progFill.classList.add('paused');progSt.textContent='⏸ Paused';
+  addLog({time:new Date().toLocaleTimeString(),message:reason||'Paused',type:'info'});
+  showSt('warning',(reason||'Paused')+' — click Resume to continue');
+}
+function doResume(){
+  if(!isGen||!isPaused)return;isPaused=false;
+  btnPauseT.textContent='⏸ Pause';btnPause.classList.remove('resume');progFill.classList.remove('paused');progSt.textContent='Resuming...';
+  retryBadge.classList.remove('vis');
+  addLog({time:new Date().toLocaleTimeString(),message:'Resuming...',type:'info'});showSt('info','Resuming...');
+  continueActiveJob(jobId);
+}
+btnPause.onclick=function(){if(isPaused)doResume();else doPause('Paused by user');};
+
+// ============================================
+// GENERATION PIPELINE
+// ============================================
+function processChunk(jid){
+  if(isPaused||stopRequested)return;
+  clearTimeout(chunkTimeoutId);
+  chunkTimeoutId=setTimeout(function(){
+    if(isGen&&!isPaused&&!stopRequested){errorRetryCount++;retryCount.textContent=errorRetryCount;retryBadge.classList.add('vis');doPause('Server timeout — click Resume to retry');}
+  },CHUNK_TIMEOUT_MS);
+
+  google.script.run.withSuccessHandler(function(r){
+    clearTimeout(chunkTimeoutId);addLogs(r.logs);
+    if(r.htmlChunk)appendToPreview(r.htmlChunk);
+    if(isPaused||stopRequested){if(stopRequested){resetUI(true);showSt('success','Stopped! '+livePageCount+' pages saved to VPS storage — ready for download.');}return;}
+    if(!r.success&&!r.done){
+      errorRetryCount++;retryCount.textContent=errorRetryCount;retryBadge.classList.add('vis');
+      doPause('Error: '+(r.error||'Unknown')+' — Click Resume to retry');return;
+    }
+    updProg(r.currentTask,r.totalTasks);
+    if(r.done){
+      updProg(r.totalTasks,r.totalTasks,'Finalizing...');
+      addLog({time:new Date().toLocaleTimeString(),message:'All pages generated. Assembling final coursebook...',type:'info'});
+      google.script.run.withSuccessHandler(function(hr){
+        resetUI(true);
+        if(hr.success){
+          if(!hasUserEdits){
+            contentEdited=false;
+            addLog({time:new Date().toLocaleTimeString(),message:'Coursebook ready. Pages are backed up on VPS storage with embedded images.',type:'success'});
+          } else {
+            contentEdited=true;
+            addLog({time:new Date().toLocaleTimeString(),message:'Edits detected — Download will include your live changes.',type:'info'});
+          }
+          showSt('success',hr.message);
+          if(hr.dbUploadPending){
+            showDbStatus('info','PDF uploaded in DB: PENDING','Click Download PDF. After the PDF is generated, it will be uploaded to RMS/GHL DB automatically with qmsTypeId: 31.');
+          } else {
+            showDbStatus('warning','PDF uploaded in DB: NO','Custom course selected. DB upload will be skipped after PDF generation.');
+          }
+          // v9.1: defer cleanup until user downloads — preserves Drive backups meanwhile.
+          pendingCleanupJobId=jid;
+        } else showSt('error',hr.message);
+      }).withFailureHandler(function(err){resetUI(true);showSt('error',err.message);}).getGeneratedHTML(jid);
+    } else setTimeout(function(){processChunk(jid);},100);
+  }).withFailureHandler(function(err){
+    clearTimeout(chunkTimeoutId);errorRetryCount++;retryCount.textContent=errorRetryCount;retryBadge.classList.add('vis');
+    addLog({time:new Date().toLocaleTimeString(),message:'Error: '+err.message,type:'error'});
+    doPause('Server error — Click Resume to retry');
+  }).processNextChunk(jid);
+}
+
+function resetUI(keepDl){
+  isGen=false;stopRequested=false;isPaused=false;errorRetryCount=0;clearTimeout(chunkTimeoutId);
+  btnGo.disabled=false;btnGoT.textContent='Generate Coursebook';$('btnToc').disabled=false;hideProg();
+  btnStop.classList.remove('vis');btnPause.classList.remove('vis');btnPause.classList.remove('resume');
+  btnPauseT.textContent='⏸ Pause';retryBadge.classList.remove('vis');progFill.classList.remove('paused');
+  if(livePageCount>0&&keepDl){
+    btnPdf.disabled=false;btnPdfT.textContent='📄 Download PDF ('+livePageCount+' pages)';
+    btnHtml.disabled=false;btnHtmlT.textContent='🌐 Download HTML ('+livePageCount+' pages)';
+  }
+}
+
+btnStop.onclick=function(){
+  if(!isGen)return;stopRequested=true;isPaused=false;clearTimeout(chunkTimeoutId);
+  btnStop.disabled=true;btnStopT.textContent='Stopping...';btnPause.classList.remove('vis');
+  addLog({time:new Date().toLocaleTimeString(),message:'Stop requested...',type:'info'});
+  if(livePageCount>0){
+    if(jobId)google.script.run.withSuccessHandler(function(){}).logStoppedGeneration(jobId,livePageCount);
+    resetUI(true);showSt('warning','Stopped. '+livePageCount+' pages saved to VPS storage — can be resumed from "My Coursebooks".');
+  } else {resetUI();showSt('warning','Stopped. No pages.');}
+};
+
+form.addEventListener('submit',function(e){
+  e.preventDefault();if(isGen)return;
+  if($('pdfMode')&&$('pdfMode').checked){startPdfCleanRebuild();return;}
+  currentGenerationMode='coursebook';
+  var name=$('fName').value.trim(),email=$('fEmail').value.trim();
+  var mode=getCourseMode();
+  var title=getEffectiveCourseName(),toc=$('fToc').value.trim();
+  if(mode==='rms'&&!selectedRmsCourse){showSt('error','Please select an RMS course from the dropdown.');return;}
+  var pages=Math.min(Math.max(parseInt($('fPages').value,10)||100,50),500);
+  $('fPages').value=pages;
+  var imgOn=$('fImg').checked;
+  if(!name||!email||!title||!toc){showSt('error','Please fill all fields');return;}
+
+  isGen=true;stopRequested=false;isPaused=false;errorRetryCount=0;
+  cachedFileId=null;contentEdited=false;hasUserEdits=false;cachedPdfBase64=null;pendingCleanupJobId=null;
+  btnGo.disabled=true;btnGoT.textContent='Generating...';
+  btnPdf.disabled=true;btnPdfT.textContent='📄 Download PDF';
+  btnHtml.disabled=true;btnHtmlT.textContent='🌐 Download HTML';
+  $('btnToc').disabled=true;clearLogs();hideSt();hideDbStatus();flink.classList.remove('vis');retryBadge.classList.remove('vis');
+  btnStop.classList.add('vis');btnStop.disabled=false;btnStopT.textContent='Stop Generation';
+  btnPause.classList.add('vis');btnPause.disabled=false;btnPauseT.textContent='⏸ Pause';btnPause.classList.remove('resume');
+  progFill.classList.remove('paused');
+  addLog({time:new Date().toLocaleTimeString(),message:'Starting coursebook generation...',type:'info'});
+  addLog({time:new Date().toLocaleTimeString(),message:'Selected target pages: '+pages+'. The generator will plan page blocks close to this number.',type:'info'});
+  addLog({time:new Date().toLocaleTimeString(),message:imgOn?'Images ON — GPT Image 2 visual generation enabled.':'Images OFF — no image prompts or image API calls will run.',type:imgOn?'info':'success'});
+  updProg(0,1,'Initializing...');
+
+  google.script.run.withSuccessHandler(function(r){
+    addLogs(r.logs);
+    if(!r.success){resetUI();showSt('error',r.message);return;}
+    jobId=r.jobId;
+    if(r.htmlHeader)initializePreview(r.htmlHeader);
+    updProg(0,r.totalTasks);processChunk(jobId);
+  }).withFailureHandler(function(err){resetUI();showSt('error',err.message);}).initializeGeneration({
+    courseName:title,
+    totalPages:pages,
+    tableOfContents:toc,
+    userName:name,
+    userEmail:email,
+    imagesEnabled:imgOn,
+    courseMode:mode,
+    rmsCourseName:getSelectedRmsCourseName(),
+    rmsCourseId:getSelectedRmsCourseId(),
+    storeToDb:mode==='rms'
+  });
+});
+
+// ============================================
+// DOWNLOAD PDF — v9.3: per-element rendering via jsPDF + html2canvas directly.
+// Each .page / .content-section div is rendered to its OWN PDF page. No blank pages,
+// no arbitrary slicing through content, proper structure preserved.
+// Tall content is split across multiple PDF pages only when a single element
+// exceeds A4 height — and even then, splits are on raster rows, not mid-element.
+// ============================================
+
+// Load a script into the preview iframe and resolve when it's ready.
+function loadIframeScript(src) {
+  return new Promise(function(resolve, reject){
+    if (!previewIframe) { reject(new Error('No preview iframe')); return; }
+    var doc = previewIframe.contentDocument;
+    var existing = doc.querySelector('script[data-src="'+src+'"]');
+    if (existing && existing._loaded) { resolve(); return; }
+    if (existing) {
+      existing.addEventListener('load', function(){ resolve(); });
+      existing.addEventListener('error', function(){ reject(new Error('Script failed: '+src)); });
+      return;
+    }
+    var s = doc.createElement('script');
+    s.src = src;
+    s.setAttribute('data-src', src);
+    s._loaded = false;
+    s.onload = function(){ s._loaded = true; resolve(); };
+    s.onerror = function(){ reject(new Error('Failed to load: '+src)); };
+    doc.head.appendChild(s);
+  });
+}
+
+// Main PDF generation: iterates pages, renders each, writes into jsPDF.
+function renderPdfPerPage(doc, filename) {
+  return new Promise(function(resolve, reject){
+    var win = previewIframe.contentWindow;
+    var jsPDFCtor = (win.jspdf && win.jspdf.jsPDF) || win.jsPDF;
+    if (!jsPDFCtor)         { reject(new Error('jsPDF not loaded')); return; }
+    if (!win.html2canvas)   { reject(new Error('html2canvas not loaded')); return; }
+
+    // ── PDF page geometry ──
+    // A4: 210 × 297 mm. We leave a margin around every page so content never
+    // butts against the edge AND to give splits a visual breathing gap.
+    var pdfWidthMm = 210, pdfHeightMm = 297;
+    var marginSideMm = 10;   // left/right
+    var marginTopMm  = 10;
+    var marginBottomMm = 15; // bottom — larger so the last line never kisses the edge
+    var usableWidthMm  = pdfWidthMm  - 2 * marginSideMm;   // 190mm
+    var usableHeightMm = pdfHeightMm - marginTopMm - marginBottomMm; // 272mm
+    var renderWidthPx = 794; // A4 width at 96dpi
+
+    // ── Inject temporary CSS that makes the preview paint-correct for PDF capture ──
+    // The cover page uses `min-height: 100vh` (viewport-relative) which balloons
+    // to huge pixel values inside the iframe; pin it to a fixed A4-shaped box.
+    // The .page/.content-section elements use `overflow: hidden` which would
+    // clip any content slightly larger than expected — OK on-screen, wrong for PDF.
+    var pdfStyle = doc.getElementById('pdf-render-style');
+    if (!pdfStyle) {
+      pdfStyle = doc.createElement('style');
+      pdfStyle.id = 'pdf-render-style';
+      doc.head.appendChild(pdfStyle);
+    }
+    pdfStyle.textContent =
+      'body.pdf-rendering .cover-page { min-height: 1000px !important; height: 1000px !important; padding: 40mm 10mm !important; }' +
+      'body.pdf-rendering .page, body.pdf-rendering .content-section {' +
+      '  overflow: visible !important;' +
+      '  width: '+renderWidthPx+'px !important;' +
+      '  max-width: '+renderWidthPx+'px !important;' +
+      '  min-height: 0 !important;' +
+      '  box-sizing: border-box !important;' +
+      '  page-break-after: auto !important;' +
+      '  page-break-before: auto !important;' +
+      '}' +
+      'body.pdf-rendering * { animation: none !important; transition: none !important; }' +
+      'body.pdf-rendering img { max-width: 100% !important; height: auto !important; }';
+
+    doc.body.classList.add('pdf-rendering');
+
+    // Freeze editing state + clear image selection outline for clean capture
+    var wasEditable = doc.body.contentEditable;
+    doc.body.contentEditable = 'false';
+    var savedSelection = selectedImage;
+    var savedOutline   = savedSelection ? savedSelection.style.outline : '';
+    if (savedSelection) savedSelection.style.outline = '';
+
+    // Give the layout engine a tick to apply the overrides before we capture
+    setTimeout(function(){
+      var pages = Array.prototype.slice.call(doc.querySelectorAll('.page, .content-section'));
+      if (!pages.length) {
+        cleanup(); reject(new Error('No page elements to render'));
+        return;
+      }
+
+      var pdf = new jsPDFCtor({ orientation: 'portrait', unit: 'mm', format: 'a4', compress: true });
+      var isFirstPage = true;
+      var idx = 0;
+
+      function cleanup() {
+        try {
+          doc.body.classList.remove('pdf-rendering');
+          doc.body.contentEditable = wasEditable || 'true';
+          if (savedSelection) savedSelection.style.outline = savedOutline || '3px solid #805ad5';
+          if (pdfStyle && pdfStyle.parentNode) pdfStyle.parentNode.removeChild(pdfStyle);
+        } catch(e) {}
+      }
+
+      // Scan the source canvas bottom-up within [minY, preferredY] to find the
+      // closest row that is "mostly white" (≤1% non-white pixels) — i.e. the gap
+      // between paragraphs or between a paragraph and an image. If none exists
+      // within the search band, fall back to the preferred Y.
+      // One getImageData call per search band keeps this fast even for tall canvases.
+      function findSafeCutY(canvas, preferredY, minY) {
+        if (preferredY >= canvas.height) return canvas.height;
+        if (minY < 0) minY = 0;
+        if (preferredY - minY < 5) return preferredY;
+        var w = canvas.width;
+        var bandH = preferredY - minY;
+        var ctx;
+        try { ctx = canvas.getContext('2d'); } catch(e) { return preferredY; }
+        var data;
+        try { data = ctx.getImageData(0, minY, w, bandH).data; }
+        catch(e) { return preferredY; } // tainted canvas — can't inspect
+        var threshold = Math.max(2, Math.floor(w * 0.01)); // ≤1% content → whitespace row
+        for (var ry = bandH - 1; ry >= 0; ry--) {
+          var rowStart = ry * w * 4;
+          var nonWhite = 0;
+          for (var x = 0; x < w; x++) {
+            var i = rowStart + (x << 2);
+            if (data[i] < 245 || data[i+1] < 245 || data[i+2] < 245) {
+              nonWhite++;
+              if (nonWhite > threshold) break;
+            }
+          }
+          if (nonWhite <= threshold) return minY + ry;
+        }
+        return preferredY;
+      }
+
+      function addCanvasToPdf(canvas) {
+        // Scale: canvas.width maps to usableWidthMm on the PDF page.
+        var renderedHeightMm = (canvas.height / canvas.width) * usableWidthMm;
+
+        if (renderedHeightMm <= usableHeightMm + 2) {
+          // Fits on one PDF page — place inside the margin box
+          var imgData = canvas.toDataURL('image/jpeg', 0.92);
+          if (!isFirstPage) pdf.addPage();
+          isFirstPage = false;
+          pdf.addImage(imgData, 'JPEG', marginSideMm, marginTopMm,
+                       usableWidthMm, Math.min(renderedHeightMm, usableHeightMm));
+          return;
+        }
+
+        // Content taller than one A4 page — split into safe chunks.
+        // nominalSlicePx = exact pixel height that fills one PDF page at our scale.
+        var nominalSlicePx = Math.floor((usableHeightMm / usableWidthMm) * canvas.width);
+        // Minimum slice height — don't create an orphan sliver at top of a new page.
+        // Search for a safe cut within the LAST 30% of the nominal slice; if none
+        // found we fall back to the nominal cut (unavoidable at that point).
+        var y = 0, safetyCounter = 0;
+        while (y < canvas.height) {
+          if (++safetyCounter > 500) break; // hard guard against any infinite loop
+
+          var preferredEnd = Math.min(y + nominalSlicePx, canvas.height);
+          var safeEnd;
+          if (preferredEnd >= canvas.height) {
+            safeEnd = canvas.height; // last slice — take whatever's left
+          } else {
+            var searchFloor = y + Math.floor(nominalSlicePx * 0.70);
+            safeEnd = findSafeCutY(canvas, preferredEnd, searchFloor);
+            // Guard: ensure we always advance
+            if (safeEnd <= y + 50) safeEnd = preferredEnd;
+          }
+
+          var sliceH = safeEnd - y;
+          var slice = doc.createElement('canvas');
+          slice.width = canvas.width;
+          slice.height = sliceH;
+          var sctx = slice.getContext('2d');
+          sctx.fillStyle = '#ffffff';
+          sctx.fillRect(0, 0, slice.width, slice.height);
+          sctx.drawImage(canvas, 0, y, canvas.width, sliceH, 0, 0, slice.width, sliceH);
+
+          var sliceData = slice.toDataURL('image/jpeg', 0.92);
+          var sliceHeightMm = (sliceH / canvas.width) * usableWidthMm;
+
+          if (!isFirstPage) pdf.addPage();
+          isFirstPage = false;
+          pdf.addImage(sliceData, 'JPEG', marginSideMm, marginTopMm,
+                       usableWidthMm, Math.min(sliceHeightMm, usableHeightMm));
+
+          y = safeEnd;
+        }
+      }
+
+      function renderNext() {
+        if (idx >= pages.length) {
+          try {
+            var dataUri = pdf.output('datauristring');
+            var base64 = dataUri && dataUri.indexOf(',') !== -1 ? dataUri.split(',')[1] : '';
+            pdf.save(filename);
+            cleanup();
+            resolve({base64:base64, filename:filename});
+          }
+          catch(e) { cleanup(); reject(e); }
+          return;
+        }
+
+        btnPdfT.innerHTML = '<span class="spinner"></span> PDF: page '+(idx+1)+' of '+pages.length;
+        updProg(idx+1, pages.length, 'Rendering PDF page '+(idx+1)+'/'+pages.length);
+
+        win.html2canvas(pages[idx], {
+          scale: 2,                 // 2× for crisp text
+          useCORS: true,
+          allowTaint: false,        // keep canvas clean so getImageData works
+          backgroundColor: '#ffffff',
+          logging: false,
+          width: renderWidthPx,
+          windowWidth: renderWidthPx,
+          imageTimeout: 0,          // base64 images load instantly; no timeout needed
+          removeContainer: true
+        }).then(function(canvas){
+          try {
+            addCanvasToPdf(canvas);
+            canvas = null;            // hint for GC
+            idx++;
+            // Yield to browser so UI stays responsive on large coursebooks
+            setTimeout(renderNext, 10);
+          } catch(e) { cleanup(); reject(e); }
+        }).catch(function(err){
+          cleanup(); reject(err);
+        });
+      }
+
+      renderNext();
+    }, 150);
+  });
+}
+
+btnPdf.onclick = function(){
+  if (!previewIframe) { showSt('error','Preview not ready yet.'); return; }
+  var doc = previewIframe.contentDocument || previewIframe.contentWindow.document;
+  if (!doc || !doc.body || !doc.body.innerHTML.trim()) { showSt('error','No content available for PDF.'); return; }
+
+  var courseName = (getEffectiveCourseName() || 'Coursebook').replace(/[^a-z0-9]/gi,'_');
+  var filename = courseName + '.pdf';
+
+  btnPdf.disabled = true;
+  btnPdfT.innerHTML = '<span class="spinner"></span> Loading PDF engine...';
+  showSt('info','Preparing PDF... large coursebooks may take a minute. Please do not close this tab.');
+  addLog({time:new Date().toLocaleTimeString(), message:'Loading jsPDF + html2canvas...', type:'info'});
+
+  Promise.resolve()
+    .then(function(){ return loadIframeScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js'); })
+    .then(function(){ return loadIframeScript('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js'); })
+    .then(function(){
+      addLog({time:new Date().toLocaleTimeString(), message:'Rendering pages one at a time (no blank pages, no cuts)...', type:'info'});
+      return renderPdfPerPage(doc, filename);
+    })
+    .then(function(pdfResult){
+      hideProg();
+      btnPdf.disabled = false;
+      btnPdfT.textContent = '📄 Download PDF'+(livePageCount?' ('+livePageCount+' pages)':'');
+      addLog({time:new Date().toLocaleTimeString(), message:'PDF ready — downloaded as '+filename, type:'success'});
+
+      if (jobId && pdfResult && pdfResult.base64) {
+        var mode=getCourseMode();
+        ensureLogsVisible();
+        addLog({time:new Date().toLocaleTimeString(), message:'PDF generated. Starting DB upload step using the configured official email...', type:'info'});
+        showSt('info', mode==='rms' ? 'PDF generated. PDF uploaded in DB: RUNNING...' : 'PDF generated. PDF uploaded in DB: NO — skipped for custom course.');
+        showDbStatus('info', mode==='rms' ? 'PDF uploaded in DB: RUNNING' : 'PDF uploaded in DB: NO', mode==='rms' ? 'Fetching EmpCode using the configured official email and uploading the generated PDF to RMS/GHL DB with qmsTypeId: 31.' : 'Custom course selected, so the PDF is download-only and is not uploaded to DB.');
+        google.script.run
+          .withSuccessHandler(function(r){
+            addServerLogs(r&&r.logs);
+            if(r&&r.success){
+              if(r.fileUrl)showFL(r.fileUrl);
+              if(r.dbUpload&&r.dbUpload.success){
+                showSt('success','PDF uploaded in DB: YES — File is now stored in DB.');
+                showDbStatus('success','PDF uploaded in DB: YES','File is now stored in DB. Course: '+(r.dbUpload.courseName||getEffectiveCourseName())+' | qmsTypeId: 31 | EmpCode: '+(r.dbUpload.empCode||''));
+                addLog({time:new Date().toLocaleTimeString(), message:'PDF uploaded in DB: YES. File is now stored in DB. EmpCode: '+(r.dbUpload.empCode||''), type:'success'});
+              } else if(r.dbUpload&&r.dbUpload.skipped){
+                showSt('success','PDF uploaded in DB: NO — custom course skipped.');
+                showDbStatus('warning','PDF uploaded in DB: NO','Custom course selected. The PDF is available for download only. DB upload is skipped.');
+                addLog({time:new Date().toLocaleTimeString(), message:'PDF uploaded in DB: NO — Custom course selected, DB upload skipped.', type:'info'});
+              } else {
+                var dbMsg=(r.dbUpload&&r.dbUpload.message)||r.message||'Unknown';
+                showSt('error','PDF downloaded. PDF uploaded in DB: NO — '+dbMsg);
+                showDbStatus('error','PDF uploaded in DB: NO','DB upload failed: '+dbMsg);
+                addLog({time:new Date().toLocaleTimeString(), message:'PDF uploaded in DB: NO — DB upload failed: '+dbMsg, type:'error'});
+              }
+            } else {
+              var finalMsg=(r&&r.message)||'Unknown';
+              showSt('error','PDF uploaded in DB: NO — final DB upload step failed: '+finalMsg);
+              showDbStatus('error','PDF uploaded in DB: NO','Final DB upload step failed: '+finalMsg);
+              addServerLogs(r&&r.logs);
+            }
+            if (pendingCleanupJobId) {
+              var cleanupJid = pendingCleanupJobId; pendingCleanupJobId = null;
+              google.script.run.withSuccessHandler(function(){
+                addLog({time:new Date().toLocaleTimeString(), message:'Server backups cleaned up.', type:'info'});
+              }).withFailureHandler(function(){}).cleanupCompletedJob(cleanupJid);
+            }
+          })
+          .withFailureHandler(function(err){
+            var emsg=err&&err.message?err.message:String(err);
+            showSt('error','PDF uploaded in DB: NO — final DB upload step failed: '+emsg);
+            showDbStatus('error','PDF uploaded in DB: NO','Final DB upload step failed: '+emsg);
+            ensureLogsVisible();
+            addLog({time:new Date().toLocaleTimeString(), message:'Final DB upload step failed: '+emsg, type:'error'});
+          })
+          .finalizeCoursebookPdf(jobId, pdfResult.base64, getEffectiveCourseName(), $('fName').value.trim(), $('fEmail').value.trim(), getCourseMode(), getSelectedRmsCourseName());
+      } else {
+        showSt('warning','PDF uploaded in DB: NO — not attempted.');
+        showDbStatus('warning','PDF uploaded in DB: NO','DB upload was not attempted because PDF base64 was not available to send to the backend upload step. The file was downloaded locally only.');
+        if (jobId) google.script.run.withSuccessHandler(function(){}).withFailureHandler(function(){}).logDownloadEvent(jobId, filename);
+      }
+    })
+    .catch(function(err){
+      hideProg();
+      btnPdf.disabled = false;
+      btnPdfT.textContent = '📄 Download PDF'+(livePageCount?' ('+livePageCount+' pages)':'');
+      showSt('error','PDF generation failed: '+(err && err.message ? err.message : err));
+      addLog({time:new Date().toLocaleTimeString(), message:'PDF failed: '+err, type:'error'});
+    });
+};
+
+// Download HTML
+btnHtml.onclick=function(){
+  var html=getFullHTML();if(!html||html.length<100){showSt('error','No content.');return;}
+  var cn=(getEffectiveCourseName()||'Coursebook').replace(/[^a-z0-9]/gi,'_');
+  try{
+    var blob=new Blob([html],{type:'text/html;charset=utf-8'});var url=URL.createObjectURL(blob);
+    var a=document.createElement('a');a.href=url;a.download=cn+'.html';document.body.appendChild(a);a.click();document.body.removeChild(a);
+    setTimeout(function(){URL.revokeObjectURL(url);},5000);
+    showSt('success','HTML downloaded! Images are embedded — file is fully self-contained.');
+    if(jobId){google.script.run.withSuccessHandler(function(){}).withFailureHandler(function(){}).logDownloadEvent(jobId,cn+'.html');}
+    // v9.1: cleanup Drive backups after HTML download
+    if(pendingCleanupJobId){
+      var cleanupJid=pendingCleanupJobId;pendingCleanupJobId=null;
+      google.script.run.withSuccessHandler(function(){}).withFailureHandler(function(){}).cleanupCompletedJob(cleanupJid);
+    }
+  }catch(e){showSt('error',e.message);}
+};
+
+// ============================================
+// DASHBOARD
+// ============================================
+var dashAllRows=[],dashSortCol='timestamp',dashSortAsc=false;
+function getDashUserName(){return($('fName').value||'').trim();}
+function openDashboard(){
+  $('dashBg').classList.add('vis');document.body.style.overflow='hidden';
+  var uname=getDashUserName();
+  if(!uname){$('dashBody').innerHTML='<tr><td colspan="7"><div class="dash-empty">Select your name first (left panel dropdown).</div></td></tr>';$('dashRowCount').textContent='';return;}
+  loadDashboardData();
+}
+function closeDashboard(){$('dashBg').classList.remove('vis');document.body.style.overflow='';}
+$('btnDashboard').onclick=openDashboard;
+$('dashClose').onclick=closeDashboard;
+$('dashRefresh').onclick=function(){loadDashboardData();};
+
+function loadDashboardData(){
+  var uname=getDashUserName();if(!uname){openDashboard();return;}
+  var btn=$('dashRefresh');btn.disabled=true;btn.textContent='↻ Loading...';
+  $('dashBody').innerHTML='<tr><td colspan="7"><div class="dash-loading"><span class="spinner"></span> Loading...</div></td></tr>';
+  google.script.run.withSuccessHandler(function(r){
+    btn.disabled=false;btn.textContent='↻ Refresh';
+    if(!r||!r.success){$('dashBody').innerHTML='<tr><td colspan="7"><div class="dash-empty">'+(r?r.message:'Failed')+'</div></td></tr>';return;}
+    dashAllRows=r.rows||[];
+    $('dsTotal').textContent=r.stats.total;$('dsCompleted').textContent=r.stats.completed;$('dsStopped').textContent=r.stats.stopped;
+    $('dsErrors').textContent=r.stats.errors;$('dsGenerating').textContent=r.stats.generating;$('dsCost').textContent='$'+r.stats.totalCost.toFixed(2);
+    applyDashFilters();
+  }).withFailureHandler(function(err){btn.disabled=false;btn.textContent='↻ Refresh';$('dashBody').innerHTML='<tr><td colspan="7"><div class="dash-empty">Error: '+esc(err.message)+'</div></td></tr>';}).fetchUserDashboardData(uname);
+}
+
+function getStatusClass(s){s=(s||'').toLowerCase();if(s.indexOf('restarted')!==-1)return'st-restarted';if(s.indexOf('completed')!==-1&&s.indexOf('downloaded')!==-1)return'st-downloaded';if(s.indexOf('completed')!==-1)return'st-completed';if(s.indexOf('stopped')!==-1)return'st-stopped';if(s.indexOf('error')!==-1)return'st-error';if(s.indexOf('generating')!==-1)return'st-generating';return'st-completed';}
+function renderDashTable(rows){
+  if(!rows.length){$('dashBody').innerHTML='<tr><td colspan="7"><div class="dash-empty">No records.</div></td></tr>';$('dashRowCount').textContent='0';return;}
+  var html='';
+  for(var i=0;i<rows.length;i++){
+    var r=rows[i];
+    var driveCell=(r.driveLink&&r.driveLink.indexOf('http')!==-1)?'<a href="'+esc(r.driveLink)+'" target="_blank">Open</a>':'<span class="no-link">'+esc(r.driveLink||'—')+'</span>';
+    var dlCell=(r.downloadLink&&r.downloadLink!=='Not Downloaded')?'<span style="font-size:.74rem;color:#0f766e;">'+esc(r.downloadLink)+'</span>':'<span class="no-link">Not Downloaded</span>';
+    var actionsCell=r.canResume?'<button class="btn-resume-row" data-row="'+r.rowNum+'" data-jobid="'+esc(r.storedJobId||'')+'" onclick="handleResume('+r.rowNum+',this)">▶ Resume</button>':'<span style="color:#cbd5e1;">—</span>';
+    html+='<tr><td style="white-space:nowrap;font-size:.78rem;color:#64748b;">'+esc(r.timestamp)+'</td><td class="dt-title" title="'+esc(r.title)+'">'+esc(r.title)+'</td><td><span class="st-badge '+getStatusClass(r.status)+'">'+esc(r.status)+'</span></td><td style="font-weight:600;">'+esc(r.cost)+'</td><td class="dt-link">'+driveCell+'</td><td class="dt-link">'+dlCell+'</td><td style="text-align:center;">'+actionsCell+'</td></tr>';
+  }
+  $('dashBody').innerHTML=html;$('dashRowCount').textContent=rows.length+' of '+dashAllRows.length;
+}
+
+function applyDashFilters(){
+  var search=($('dfSearch').value||'').toLowerCase().trim(),status=$('dfStatus').value.toLowerCase(),dateFrom=$('dfDateFrom').value,dateTo=$('dfDateTo').value;
+  var filtered=dashAllRows.filter(function(r){
+    if(search&&(r.title+' '+r.status).toLowerCase().indexOf(search)===-1)return false;
+    if(status&&(r.status||'').toLowerCase().indexOf(status)===-1)return false;
+    if(dateFrom||dateTo){var d=new Date(r.timestamp);if(!isNaN(d.getTime())){var iso=d.toISOString().substring(0,10);if(dateFrom&&iso<dateFrom)return false;if(dateTo&&iso>dateTo)return false;}}
+    return true;
+  });
+  filtered.sort(function(a,b){var va=a[dashSortCol]||'',vb=b[dashSortCol]||'';if(dashSortCol==='cost'){return(dashSortAsc?1:-1)*(parseFloat(va.replace(/[^0-9.\-]/g,''))||0)-(parseFloat(vb.replace(/[^0-9.\-]/g,''))||0);}va=va.toString().toLowerCase();vb=vb.toString().toLowerCase();if(va<vb)return dashSortAsc?-1:1;if(va>vb)return dashSortAsc?1:-1;return 0;});
+  renderDashTable(filtered);
+}
+
+document.querySelectorAll('.dash-table th[data-col]').forEach(function(th){th.addEventListener('click',function(){var col=th.getAttribute('data-col');if(dashSortCol===col)dashSortAsc=!dashSortAsc;else{dashSortCol=col;dashSortAsc=true;}applyDashFilters();});});
+$('dfSearch').addEventListener('input',applyDashFilters);$('dfStatus').addEventListener('change',applyDashFilters);
+$('dfDateFrom').addEventListener('change',applyDashFilters);$('dfDateTo').addEventListener('change',applyDashFilters);
+$('dfClear').onclick=function(){$('dfSearch').value='';$('dfStatus').value='';$('dfDateFrom').value='';$('dfDateTo').value='';applyDashFilters();};
+
+// ============================================
+// RESUME FROM DASHBOARD — 3-TIER LOGIC
+// ============================================
+function handleResume(rowNum,btnEl){
+  if(isGen&&!isPaused&&!stopRequested){alert('A generation is running. Stop or pause it first.');return;}
+  var storedJobIdAttr=(btnEl.getAttribute('data-jobid')||'').trim();
+
+  // ── TIER 1: Same-session — job is still in memory ──
+  if(storedJobIdAttr && storedJobIdAttr===jobId && previewIframe && livePageCount>0){
+    if(!confirm('Continue from where you left off?\n'+livePageCount+' pages already in preview — they will be kept.'))return;
+    closeDashboard();
+    addLog({time:new Date().toLocaleTimeString(),message:'Resuming from page '+livePageCount+'...',type:'info'});
+    showSt('info','Resuming — '+livePageCount+' existing pages kept.');
+    enterGeneratingUI();
+    updProg(0,1,'Resuming...');
+    continueActiveJob(jobId);
+    return;
+  }
+
+  if(!confirm('Resume this coursebook?\n\nPreviously generated pages will be restored from VPS storage (with images intact).'))return;
+  btnEl.disabled=true;btnEl.textContent='Resuming...';
+
+  google.script.run.withSuccessHandler(function(r){
+    if(!r||!r.success){btnEl.disabled=false;btnEl.textContent='▶ Resume';alert('Cannot resume: '+(r?r.message:'Unknown'));return;}
+    var cfg=r.config;
+    var savedJobId=r.storedJobId||'';
+    var isPdfResume=cfg.mode==='pdf_clean_rebuild';
+    currentGenerationMode=isPdfResume?'pdf_clean_rebuild':'coursebook';
+    applyResumeCourseMode(cfg);$('fPages').value=cfg.totalPages||100;$('fToc').value=cfg.tableOfContents||'';
+    if($('pdfMode')){$('pdfMode').checked=isPdfResume;$('pdfMode').dispatchEvent(new Event('change'));}
+    $('fImg').checked=cfg.imagesEnabled!==false;$('imgSt').textContent=cfg.imagesEnabled!==false?'ON':'OFF';$('imgSt').className='tgl-st '+(cfg.imagesEnabled!==false?'on':'off');
+
+    if(!savedJobId){
+      closeDashboard();
+      google.script.run.withSuccessHandler(function(){}).markRowRestarted(rowNum);
+      addLog({time:new Date().toLocaleTimeString(),message:'No previous session. Starting fresh.',type:'info'});
+      document.querySelector('.left').scrollTop=0;
+      setTimeout(function(){form.dispatchEvent(new Event('submit'));},300);
+      return;
+    }
+
+    google.script.run.withSuccessHandler(function(resumeData){
+      closeDashboard();
+
+      if(resumeData && resumeData.alive && resumeData.backupInfo && resumeData.backupInfo.found){
+        jobId=savedJobId;
+        currentGenerationMode=resumeData.mode==='pdf_clean_rebuild'?'pdf_clean_rebuild':'coursebook';
+        livePageCount=0;accumulatedHTML='';contentEdited=false;hasUserEdits=false;
+        cachedFileId=null;cachedPdfBase64=null;pendingCleanupJobId=null;
+
+        addLog({time:new Date().toLocaleTimeString(),message:'Job found! Task '+resumeData.currentTask+'/'+resumeData.totalTasks,type:'success'});
+        addLog({time:new Date().toLocaleTimeString(),message:'Found '+resumeData.backupInfo.chunkCount+' backed-up pages. Restoring with embedded images...',type:'info'});
+        showSt('info','Restoring previously generated pages (images included)...');
+
+        initializePreview(resumeData.htmlHeader);
+        htmlHeader=resumeData.htmlHeader;
+
+        enterGeneratingUI();
+        updProg(0,resumeData.totalTasks,'Restoring pages...');
+
+        var taskNums=resumeData.backupInfo.taskNums;
+        var loadIdx=0;
+
+        function loadNextBackupChunk(){
+          if(loadIdx>=taskNums.length){
+            addLog({time:new Date().toLocaleTimeString(),message:'Restored '+livePageCount+' pages with images. Continuing generation...',type:'success'});
+            showSt('info',livePageCount+' pages restored! Generating remaining pages...');
+            updProg(resumeData.currentTask,resumeData.totalTasks,'Generating...');
+            if(livePageCount>0){
+              btnPdf.disabled=false;btnPdfT.textContent='📄 Download PDF ('+livePageCount+' pages)';
+              btnHtml.disabled=false;btnHtmlT.textContent='🌐 Download HTML ('+livePageCount+' pages)';
+            }
+            continueActiveJob(jobId);
+            return;
+          }
+          var tn=taskNums[loadIdx];
+          updProg(loadIdx,taskNums.length,'Restoring page '+(loadIdx+1)+'/'+taskNums.length+'...');
+
+          google.script.run.withSuccessHandler(function(chunkResult){
+            if(chunkResult&&chunkResult.success&&chunkResult.html){
+              appendToPreview(chunkResult.html);
+              addLog({time:new Date().toLocaleTimeString(),message:'  Page '+(loadIdx+1)+' restored ('+livePageCount+' total)',type:'info'});
+            }
+            loadIdx++;
+            setTimeout(loadNextBackupChunk,50);
+          }).withFailureHandler(function(err){
+            addLog({time:new Date().toLocaleTimeString(),message:'  Page '+(loadIdx+1)+' load failed: '+err.message,type:'error'});
+            loadIdx++;
+            setTimeout(loadNextBackupChunk,50);
+          }).loadBackupHtmlChunkForClient(savedJobId,tn);
+        }
+        loadNextBackupChunk();
+
+      } else if(resumeData && resumeData.alive){
+        jobId=savedJobId;
+        currentGenerationMode=resumeData.mode==='pdf_clean_rebuild'?'pdf_clean_rebuild':'coursebook';
+        var hdr=resumeData.htmlHeader;
+        initializePreview(hdr);htmlHeader=hdr;
+        enterGeneratingUI();
+        addLog({time:new Date().toLocaleTimeString(),message:'Job found but no page backups. Continuing from task '+resumeData.currentTask+'...',type:'info'});
+        updProg(resumeData.currentTask,resumeData.totalTasks,'Generating...');
+        continueActiveJob(jobId);
+
+      } else {
+        google.script.run.withSuccessHandler(function(){}).markRowRestarted(rowNum);
+        addLog({time:new Date().toLocaleTimeString(),message:'No previous session data. Starting fresh.',type:'info'});
+        showSt('info','Starting fresh generation for "'+cfg.courseName+'"');
+        document.querySelector('.left').scrollTop=0;
+        setTimeout(function(){form.dispatchEvent(new Event('submit'));},300);
+      }
+
+    }).withFailureHandler(function(err){
+      closeDashboard();
+      google.script.run.withSuccessHandler(function(){}).markRowRestarted(rowNum);
+      addLog({time:new Date().toLocaleTimeString(),message:'Could not check job. Starting fresh.',type:'info'});
+      document.querySelector('.left').scrollTop=0;
+      setTimeout(function(){form.dispatchEvent(new Event('submit'));},300);
+    }).getJobResumeData(savedJobId);
+
+  }).withFailureHandler(function(err){btnEl.disabled=false;btnEl.textContent='▶ Resume';alert('Error: '+err.message);}).getResumeConfig(rowNum);
+}
+
+function enterGeneratingUI(){
+  isGen=true;stopRequested=false;isPaused=false;errorRetryCount=0;
+  btnGo.disabled=true;btnGoT.textContent='Generating...';$('btnToc').disabled=true;
+  btnStop.classList.add('vis');btnStop.disabled=false;btnStopT.textContent='Stop Generation';
+  btnPause.classList.add('vis');btnPause.disabled=false;btnPauseT.textContent='⏸ Pause';btnPause.classList.remove('resume');
+  progFill.classList.remove('paused');retryBadge.classList.remove('vis');flink.classList.remove('vis');hideSt();
+}
+
+document.addEventListener('keydown',function(e){if(e.key==='Escape'&&$('aiImageModal').classList.contains('vis'))closeAIImageModal();if(e.key==='Escape'&&$('dashBg').classList.contains('vis'))closeDashboard();});
+</script>
+</body>
+</html>
